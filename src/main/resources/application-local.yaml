@@ -1,9 +1,0 @@
-spring:
-  docker:
-    compose:
-      enabled: true
-      lifecycle-management: start_only
-      readiness:
-        timeout: 30s
-  kafka:
-    bootstrap-servers: localhost:9092
