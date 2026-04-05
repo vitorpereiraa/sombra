@@ -1,34 +1,43 @@
 package com.github.vitorpereiraa.sombra.agent.domain;
 
+import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.ContentCachingResponseWrapper;
+
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+
+import static com.google.common.base.Preconditions.checkNotNull;
 
 public record CapturedExchange(
-    String method,
-    String path,
-    Map<String, List<String>> requestHeaders,
-    String requestBody,
-    int statusCode,
-    Map<String, List<String>> responseHeaders,
-    String responseBody,
+    HttpRequest request,
+    HttpResponse response,
     Instant timestamp,
-    String traceId
+    Optional<TraceId> traceId
 ) {
 
-    public static CapturedExchange of(
-            String method,
-            String path,
-            Map<String, List<String>> requestHeaders,
-            String requestBody,
-            int statusCode,
-            Map<String, List<String>> responseHeaders,
-            String responseBody,
-            String traceId) {
-        return new CapturedExchange(
-            method, path, requestHeaders, requestBody,
-            statusCode, responseHeaders, responseBody,
-            Instant.now(), traceId
-        );
+    public CapturedExchange {
+        checkNotNull(request, "CapturedExchange request cannot be null");
+        checkNotNull(response, "CapturedExchange response cannot be null");
+        checkNotNull(timestamp, "CapturedExchange timestamp cannot be null");
+        checkNotNull(traceId, "CapturedExchange traceId Optional cannot be null");
+    }
+
+    public static CapturedExchange from(
+            ContentCachingRequestWrapper servletRequest,
+            ContentCachingResponseWrapper servletResponse) {
+
+        var method = HttpMethod.from(servletRequest.getMethod());
+        var path = RequestPath.from(servletRequest.getRequestURI(), servletRequest.getQueryString());
+        var requestHeaders = HttpHeaders.fromServletRequest(servletRequest);
+        var requestBody = HttpBody.of(servletRequest.getContentAsByteArray());
+
+        var statusCode = new StatusCode(servletResponse.getStatus());
+        var responseHeaders = HttpHeaders.fromServletResponse(servletResponse);
+        var responseBody = HttpBody.of(servletResponse.getContentAsByteArray());
+
+        var request = new HttpRequest(method, path, requestHeaders, requestBody);
+        var response = new HttpResponse(statusCode, responseHeaders, responseBody);
+
+        return new CapturedExchange(request, response, Instant.now(), Optional.empty());
     }
 }

@@ -6,20 +6,17 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
 import org.springframework.kafka.support.serializer.JacksonJsonDeserializer;
-import org.springframework.kafka.test.utils.KafkaTestUtils;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.testcontainers.kafka.KafkaContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,30 +37,28 @@ class CaptureFilterIntegrationTest {
 
     @Test
     void shouldCaptureExchangeAndPublishToKafka() throws Exception {
-        // Make an HTTP request through the filter
         mockMvc.perform(post("/echo")
                 .contentType("application/json")
                 .content("{\"hello\":\"world\"}"))
             .andExpect(status().isOk());
 
-        // Consume from Kafka and verify
         try (var consumer = createConsumer()) {
             consumer.subscribe(List.of(TOPIC));
             var records = consumer.poll(Duration.ofSeconds(10));
 
             assertThat(records).isNotEmpty();
-            var record = records.iterator().next();
-            var event = record.value();
+            var event = records.iterator().next().value();
             assertThat(event.request().method()).isEqualTo("POST");
             assertThat(event.request().path()).isEqualTo("/echo");
-            assertThat(event.request().body()).isEqualTo("{\"hello\":\"world\"}");
+            assertThat(event.request().body()).contains("{\"hello\":\"world\"}");
             assertThat(event.response().statusCode()).isEqualTo(200);
-            assertThat(event.response().body()).isEqualTo("{\"hello\":\"world\"}");
+            assertThat(event.response().body()).contains("{\"hello\":\"world\"}");
             assertThat(event.timestamp()).isNotNull();
+            assertThat(event.traceId()).isEmpty();
         }
     }
 
-    private KafkaConsumer<String, CapturedExchangeEvent> createConsumer() {
+    KafkaConsumer<String, CapturedExchangeEvent> createConsumer() {
         var deserializer = new JacksonJsonDeserializer<>(CapturedExchangeEvent.class);
         deserializer.addTrustedPackages("com.github.vitorpereiraa.sombra.agent.streaming.dto");
 

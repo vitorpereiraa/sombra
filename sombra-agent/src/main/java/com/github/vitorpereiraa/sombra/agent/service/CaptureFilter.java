@@ -13,11 +13,6 @@ import org.springframework.web.util.ContentCachingRequestWrapper;
 import org.springframework.web.util.ContentCachingResponseWrapper;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
 
 public class CaptureFilter extends OncePerRequestFilter {
 
@@ -41,55 +36,12 @@ public class CaptureFilter extends OncePerRequestFilter {
             filterChain.doFilter(wrappedRequest, wrappedResponse);
         } finally {
             try {
-                captureAndSend(wrappedRequest, wrappedResponse);
+                var exchange = CapturedExchange.from(wrappedRequest, wrappedResponse);
+                producer.send(exchange);
             } catch (Exception e) {
                 log.error("Failed to capture exchange", e);
             }
             wrappedResponse.copyBodyToResponse();
         }
-    }
-
-    private void captureAndSend(ContentCachingRequestWrapper request, ContentCachingResponseWrapper response) {
-        String path = request.getRequestURI();
-        String queryString = request.getQueryString();
-        if (queryString != null) {
-            path = path + "?" + queryString;
-        }
-
-        var exchange = CapturedExchange.of(
-            request.getMethod(),
-            path,
-            extractHeaders(request),
-            toStringOrNull(request.getContentAsByteArray()),
-            response.getStatus(),
-            extractResponseHeaders(response),
-            toStringOrNull(response.getContentAsByteArray()),
-            null
-        );
-
-        producer.send(exchange);
-    }
-
-    private Map<String, List<String>> extractHeaders(HttpServletRequest request) {
-        Map<String, List<String>> headers = new LinkedHashMap<>();
-        for (String name : Collections.list(request.getHeaderNames())) {
-            headers.put(name, Collections.list(request.getHeaders(name)));
-        }
-        return headers;
-    }
-
-    private Map<String, List<String>> extractResponseHeaders(HttpServletResponse response) {
-        Map<String, List<String>> headers = new LinkedHashMap<>();
-        for (String name : response.getHeaderNames()) {
-            headers.put(name, List.copyOf(response.getHeaders(name)));
-        }
-        return headers;
-    }
-
-    private String toStringOrNull(byte[] content) {
-        if (content == null || content.length == 0) {
-            return null;
-        }
-        return new String(content, StandardCharsets.UTF_8);
     }
 }
