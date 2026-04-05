@@ -1,3 +1,7 @@
+sombra:
+  server:
+    topic-name: sombra.captured-exchanges
+
 spring:
   docker:
     compose:

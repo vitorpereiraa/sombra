@@ -11,7 +11,7 @@ public class CapturedExchangeConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(CapturedExchangeConsumer.class);
 
-    @KafkaListener(topics = "${sombra.server.topic-name:sombra.captured-exchanges}")
+    @KafkaListener(topics = "${sombra.server.topic-name}")
     public void consume(CapturedExchangeEvent exchange) {
         log.info("Received captured exchange: {} {} -> {}",
             exchange.request().method(),

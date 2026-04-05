@@ -1,6 +1,6 @@
 package com.github.vitorpereiraa.sombra.agent.service;
 
-import com.github.vitorpereiraa.sombra.agent.domain.CapturedExchange;
+import com.github.vitorpereiraa.sombra.agent.streaming.CapturedExchangeEventMapper;
 import com.github.vitorpereiraa.sombra.agent.streaming.CapturedExchangeProducer;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -36,8 +36,8 @@ public class CaptureFilter extends OncePerRequestFilter {
             filterChain.doFilter(wrappedRequest, wrappedResponse);
         } finally {
             try {
-                var exchange = CapturedExchange.from(wrappedRequest, wrappedResponse);
-                producer.send(exchange);
+                var event = CapturedExchangeEventMapper.toEvent(wrappedRequest, wrappedResponse);
+                producer.send(event);
             } catch (Exception e) {
                 log.error("Failed to capture exchange", e);
             }

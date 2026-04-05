@@ -1,6 +1,5 @@
 package com.github.vitorpereiraa.sombra.agent.streaming;
 
-import com.github.vitorpereiraa.sombra.agent.domain.CapturedExchange;
 import com.github.vitorpereiraa.sombra.agent.streaming.dto.CapturedExchangeEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,16 +17,15 @@ public class CapturedExchangeProducer {
         this.topicName = topicName;
     }
 
-    public void send(CapturedExchange exchange) {
-        var event = CapturedExchangeEvent.from(exchange);
-        kafkaTemplate.send(topicName, exchange.request().path().value(), event)
+    public void send(CapturedExchangeEvent event) {
+        kafkaTemplate.send(topicName, event.request().path(), event)
             .whenComplete((result, ex) -> {
                 if (ex != null) {
                     log.error("Failed to send captured exchange for {} {}",
-                        exchange.request().method(), exchange.request().path().value(), ex);
+                        event.request().method(), event.request().path(), ex);
                 } else {
                     log.debug("Sent captured exchange for {} {} to topic {}",
-                        exchange.request().method(), exchange.request().path().value(), topicName);
+                        event.request().method(), event.request().path(), topicName);
                 }
             });
     }

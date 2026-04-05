@@ -16,6 +16,7 @@
 	<modules>
 		<module>sombra-agent</module>
 		<module>sombra-server</module>
+		<module>sombra-integration-tests</module>
 	</modules>
 
 	<properties>
@@ -27,6 +28,11 @@
 			<dependency>
 				<groupId>com.github.vitorpereiraa</groupId>
 				<artifactId>sombra-agent</artifactId>
+				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.github.vitorpereiraa</groupId>
+				<artifactId>sombra-server</artifactId>
 				<version>${project.version}</version>
 			</dependency>
 		</dependencies>
