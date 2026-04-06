@@ -23,6 +23,7 @@ sombra:
     enabled: false
   server:
     topic-name: ${SOMBRA_TOPIC_NAME}
+    candidate-url: ${SOMBRA_CANDIDATE_URL}
 
 server:
   port: 8080
