@@ -1,6 +1,7 @@
 sombra:
   server:
     topic-name: sombra.captured-exchanges
+    candidate-url: http://localhost:8083
 
 spring:
   docker:
