@@ -24,6 +24,8 @@ sombra:
   server:
     topic-name: ${SOMBRA_TOPIC_NAME}
     candidate-url: ${SOMBRA_CANDIDATE_URL}
+    comparison:
+      ignored-fields: []
 
 server:
   port: 8080

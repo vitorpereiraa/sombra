@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties(SombraServerProperties.class)
+@EnableConfigurationProperties({SombraServerProperties.class, ComparisonProperties.class})
 public class SombraApplication {
 
 	static void main(String[] args) {
