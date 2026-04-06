@@ -1,8 +1,6 @@
 package com.github.vitorpereiraa.sombra.streaming;
 
 import com.github.vitorpereiraa.sombra.agent.streaming.dto.CapturedExchangeEvent;
-import com.github.vitorpereiraa.sombra.agent.streaming.dto.HttpRequestEvent;
-import com.github.vitorpereiraa.sombra.agent.streaming.dto.HttpResponseEvent;
 import com.github.vitorpereiraa.sombra.domain.CapturedExchange;
 import com.github.vitorpereiraa.sombra.domain.HttpBody;
 import com.github.vitorpereiraa.sombra.domain.HttpHeader;
