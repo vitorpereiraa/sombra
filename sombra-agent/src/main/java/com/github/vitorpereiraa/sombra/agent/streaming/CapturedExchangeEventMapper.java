@@ -19,8 +19,8 @@ import java.util.Optional;
 public final class CapturedExchangeEventMapper {
 
     public static CapturedExchangeEvent toEvent(
-            ContentCachingRequestWrapper request,
-            ContentCachingResponseWrapper response
+        ContentCachingRequestWrapper request,
+        ContentCachingResponseWrapper response
     ) {
 
         var requestEvent = new HttpRequestEvent(
@@ -43,6 +43,8 @@ public final class CapturedExchangeEventMapper {
             Optional.empty()
         );
     }
+
+    // TODO: How can we simplify or improve this mapper
 
     private static String buildPath(HttpServletRequest request) {
         var uri = request.getRequestURI();

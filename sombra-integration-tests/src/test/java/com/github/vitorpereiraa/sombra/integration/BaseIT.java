@@ -23,9 +23,6 @@ import java.util.Optional;
 @SpringBootTest(classes = SombraApplication.class, webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public abstract class BaseIT {
 
-    @Autowired
-    protected KafkaTemplate<String, CapturedExchangeEvent> kafkaTemplate;
-
     @LocalServerPort
     private int port;
 
@@ -45,30 +42,5 @@ public abstract class BaseIT {
         registry.add("sombra.server.topic-name", () -> "sombra.captured-exchanges");
         registry.add("spring.kafka.producer.key-serializer", () -> "org.apache.kafka.common.serialization.StringSerializer");
         registry.add("spring.kafka.producer.value-serializer", () -> "org.springframework.kafka.support.serializer.JacksonJsonSerializer");
-    }
-
-    protected static CapturedExchangeEvent exchangeEvent(
-            String method,
-            String path,
-            int statusCode,
-            Map<String, List<String>> requestHeaders,
-            Map<String, List<String>> responseHeaders,
-            Optional<String> requestBody,
-            Optional<String> responseBody,
-            Optional<String> traceId) {
-        var request = new HttpRequestEvent(method, path, requestHeaders, requestBody);
-        var response = new HttpResponseEvent(statusCode, responseHeaders, responseBody);
-        return new CapturedExchangeEvent(request, response, Instant.now(), traceId);
-    }
-
-    protected static CapturedExchangeEvent defaultExchangeEvent() {
-        return exchangeEvent(
-            "GET", "/api/users/1", 200,
-            Map.of("Accept", List.of("application/json")),
-            Map.of("Content-Type", List.of("application/json")),
-            Optional.empty(),
-            Optional.of("{\"id\":1}"),
-            Optional.of("trace-123")
-        );
     }
 }

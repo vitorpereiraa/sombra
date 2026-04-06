@@ -3,6 +3,7 @@ package com.github.vitorpereiraa.sombra.domain;
 import java.time.Instant;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public record CapturedExchange(
@@ -13,9 +14,9 @@ public record CapturedExchange(
 ) {
 
     public CapturedExchange {
-        checkNotNull(request, "CapturedExchange request cannot be null");
-        checkNotNull(response, "CapturedExchange response cannot be null");
-        checkNotNull(timestamp, "CapturedExchange timestamp cannot be null");
+        checkArgument(request != null, "CapturedExchange request cannot be null");
+        checkArgument(response != null, "CapturedExchange response cannot be null");
+        checkArgument(timestamp != null, "CapturedExchange timestamp cannot be null");
         checkNotNull(traceId, "CapturedExchange traceId Optional cannot be null");
     }
 }

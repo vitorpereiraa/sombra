@@ -21,6 +21,7 @@
 
 	<properties>
 		<java.version>26</java.version>
+		<guava.version>33.4.0-jre</guava.version>
 	</properties>
 
 	<dependencyManagement>
@@ -34,6 +35,11 @@
 				<groupId>com.github.vitorpereiraa</groupId>
 				<artifactId>sombra-server</artifactId>
 				<version>${project.version}</version>
+			</dependency>
+			<dependency>
+				<groupId>com.google.guava</groupId>
+				<artifactId>guava</artifactId>
+				<version>${guava.version}</version>
 			</dependency>
 		</dependencies>
 	</dependencyManagement>

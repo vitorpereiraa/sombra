@@ -1,20 +1,23 @@
 package com.github.vitorpereiraa.sombra.domain;
 
+import java.util.List;
 import java.util.Optional;
 
+import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
 public record HttpRequest(
     HttpMethod method,
     RequestPath path,
-    HttpHeaders headers,
+    List<HttpHeader> headers,
     Optional<HttpBody> body
 ) {
 
     public HttpRequest {
-        checkNotNull(method, "HttpRequest method cannot be null");
-        checkNotNull(path, "HttpRequest path cannot be null");
-        checkNotNull(headers, "HttpRequest headers cannot be null");
+        checkArgument(method != null, "HttpRequest method cannot be null");
+        checkArgument(path != null, "HttpRequest path cannot be null");
+        checkArgument(headers != null, "HttpRequest headers cannot be null");
         checkNotNull(body, "HttpRequest body Optional cannot be null");
+        headers = List.copyOf(headers);
     }
 }
