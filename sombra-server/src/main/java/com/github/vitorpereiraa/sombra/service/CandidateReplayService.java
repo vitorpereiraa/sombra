@@ -1,6 +1,5 @@
 package com.github.vitorpereiraa.sombra.service;
 
-import com.github.vitorpereiraa.sombra.SombraServerProperties;
 import com.github.vitorpereiraa.sombra.domain.HttpBody;
 import com.github.vitorpereiraa.sombra.domain.HttpHeader;
 import com.github.vitorpereiraa.sombra.domain.HttpRequest;
@@ -20,20 +19,17 @@ public class CandidateReplayService {
             Set.of("host", "content-length", "transfer-encoding", "connection");
 
     private final RestClient restClient;
-    private final SombraServerProperties properties;
 
-    public CandidateReplayService(RestClient restClient, SombraServerProperties properties) {
+    public CandidateReplayService(RestClient restClient) {
         this.restClient = restClient;
-        this.properties = properties;
     }
 
     public HttpResponse replay(HttpRequest request) {
-        var uri = properties.candidateUrl() + request.path().value();
         var method = HttpMethod.valueOf(request.method().name());
 
         var spec = restClient
                 .method(method)
-                .uri(uri)
+                .uri(request.path().value())
                 .header("X-Sombra-Replay", "true")
                 .headers(h -> request.headers().stream()
                         .filter(header ->

@@ -8,7 +8,7 @@ import org.springframework.web.client.RestClient;
 class RestClientConfiguration {
 
     @Bean
-    RestClient restClient(RestClient.Builder builder) {
-        return builder.build();
+    RestClient restClient(RestClient.Builder builder, SombraServerProperties properties) {
+        return builder.baseUrl(properties.candidateUrl()).build();
     }
 }
