@@ -44,8 +44,6 @@ public final class CapturedExchangeEventMapper {
         );
     }
 
-    // TODO: How can we simplify or improve this mapper
-
     private static String buildPath(HttpServletRequest request) {
         var uri = request.getRequestURI();
         var queryString = request.getQueryString();
