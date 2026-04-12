@@ -60,11 +60,11 @@ public class ResponseComparisonService {
         }
 
         if (originalBody.isEmpty()) {
-            return List.of(new Discrepancy.FieldAdded(new ResponseField.Body(new FieldPath("/"))));
+            return List.of(new Discrepancy.FieldAdded(new ResponseField.Body()));
         }
 
         if (candidateBody.isEmpty()) {
-            return List.of(new Discrepancy.FieldRemoved(new ResponseField.Body(new FieldPath("/"))));
+            return List.of(new Discrepancy.FieldRemoved(new ResponseField.Body()));
         }
 
         var originalContent = originalBody.get().content();
@@ -77,7 +77,7 @@ public class ResponseComparisonService {
         } catch (JacksonException e) {
             log.debug("Bodies are not valid JSON, falling back to string comparison", e);
             if (!originalContent.equals(candidateContent)) {
-                return List.of(new Discrepancy.ValueMismatch(new ResponseField.Body(new FieldPath("/"))));
+                return List.of(new Discrepancy.ValueMismatch(new ResponseField.Body()));
             }
             return List.of();
         }

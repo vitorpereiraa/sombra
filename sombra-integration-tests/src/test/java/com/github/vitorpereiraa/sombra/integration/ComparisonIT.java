@@ -49,8 +49,9 @@ class ComparisonIT extends BaseIT {
                     assertThat(result).isNotNull();
                     assertThat(result.matched()).isFalse();
                     assertThat(result.discrepancies())
-                            .anyMatch(d -> d.field() instanceof ResponseField.Body(var path)
-                                    && path.value().equals("/name"));
+                            .anyMatch(d -> d.field() instanceof ResponseField.Body body
+                                    && body.path().isPresent()
+                                    && body.path().get().value().equals("/name"));
                 });
     }
 }
