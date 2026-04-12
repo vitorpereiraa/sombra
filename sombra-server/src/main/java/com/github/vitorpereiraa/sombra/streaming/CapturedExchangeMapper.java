@@ -1,15 +1,15 @@
 package com.github.vitorpereiraa.sombra.streaming;
 
 import com.github.vitorpereiraa.sombra.agent.streaming.dto.CapturedExchangeEvent;
-import com.github.vitorpereiraa.sombra.domain.CapturedExchange;
-import com.github.vitorpereiraa.sombra.domain.HttpBody;
-import com.github.vitorpereiraa.sombra.domain.HttpHeader;
-import com.github.vitorpereiraa.sombra.domain.HttpMethod;
-import com.github.vitorpereiraa.sombra.domain.HttpRequest;
-import com.github.vitorpereiraa.sombra.domain.HttpResponse;
-import com.github.vitorpereiraa.sombra.domain.RequestPath;
-import com.github.vitorpereiraa.sombra.domain.StatusCode;
-import com.github.vitorpereiraa.sombra.domain.TraceId;
+import com.github.vitorpereiraa.sombra.domain.capture.CapturedExchange;
+import com.github.vitorpereiraa.sombra.domain.capture.TraceId;
+import com.github.vitorpereiraa.sombra.domain.http.HttpBody;
+import com.github.vitorpereiraa.sombra.domain.http.HttpHeader;
+import com.github.vitorpereiraa.sombra.domain.http.HttpMethod;
+import com.github.vitorpereiraa.sombra.domain.http.HttpRequest;
+import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
+import com.github.vitorpereiraa.sombra.domain.http.RequestPath;
+import com.github.vitorpereiraa.sombra.domain.http.StatusCode;
 
 import java.util.List;
 import java.util.Map;

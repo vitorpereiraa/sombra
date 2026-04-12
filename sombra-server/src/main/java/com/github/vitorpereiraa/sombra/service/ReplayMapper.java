@@ -1,9 +1,9 @@
 package com.github.vitorpereiraa.sombra.service;
 
-import com.github.vitorpereiraa.sombra.domain.HttpBody;
-import com.github.vitorpereiraa.sombra.domain.HttpHeader;
-import com.github.vitorpereiraa.sombra.domain.HttpResponse;
-import com.github.vitorpereiraa.sombra.domain.StatusCode;
+import com.github.vitorpereiraa.sombra.domain.http.HttpBody;
+import com.github.vitorpereiraa.sombra.domain.http.HttpHeader;
+import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
+import com.github.vitorpereiraa.sombra.domain.http.StatusCode;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;

@@ -1,7 +1,7 @@
 package com.github.vitorpereiraa.sombra.service;
 
-import com.github.vitorpereiraa.sombra.domain.HttpRequest;
-import com.github.vitorpereiraa.sombra.domain.HttpResponse;
+import com.github.vitorpereiraa.sombra.domain.http.HttpRequest;
+import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;

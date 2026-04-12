@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra.domain;
+package com.github.vitorpereiraa.sombra.domain.http;
 
 import static com.google.common.base.Preconditions.checkArgument;
 

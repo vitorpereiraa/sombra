@@ -5,6 +5,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -15,6 +16,39 @@ class EchoController {
     @PostMapping("/echo")
     ResponseEntity<String> echo(@RequestBody String body) {
         callCount.incrementAndGet();
+        return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/echo/different")
+    ResponseEntity<String> echoDifferent(
+            @RequestBody String body,
+            @RequestHeader(value = "X-Sombra-Replay", required = false) String replayHeader) {
+        callCount.incrementAndGet();
+        if (replayHeader != null) {
+            return ResponseEntity.ok("{\"name\":\"changed\",\"value\":42}");
+        }
+        return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/echo/array-reordered")
+    ResponseEntity<String> echoArrayReordered(
+            @RequestBody String body,
+            @RequestHeader(value = "X-Sombra-Replay", required = false) String replayHeader) {
+        callCount.incrementAndGet();
+        if (replayHeader != null) {
+            return ResponseEntity.ok("[{\"id\":2},{\"id\":1}]");
+        }
+        return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/echo/non-json")
+    ResponseEntity<String> echoNonJson(
+            @RequestBody String body,
+            @RequestHeader(value = "X-Sombra-Replay", required = false) String replayHeader) {
+        callCount.incrementAndGet();
+        if (replayHeader != null) {
+            return ResponseEntity.ok("not json at all");
+        }
         return ResponseEntity.ok(body);
     }
 
