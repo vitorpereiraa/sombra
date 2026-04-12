@@ -16,15 +16,11 @@ public class JsonComparator {
         }
 
         return switch (original) {
-            case JsonObject orig when candidate instanceof JsonObject cand ->
-                    compareObjects(orig, cand, path, ignoredFields);
-            case JsonArray orig when candidate instanceof JsonArray cand ->
-                    compareArrays(orig, cand, path, ignoredFields);
-            case JsonPrimitive orig when candidate instanceof JsonPrimitive cand ->
-                    comparePrimitives(orig, cand, path);
+            case JsonObject orig when candidate instanceof JsonObject cand -> compareObjects(orig, cand, path, ignoredFields);
+            case JsonArray orig when candidate instanceof JsonArray cand -> compareArrays(orig, cand, path, ignoredFields);
+            case JsonPrimitive orig when candidate instanceof JsonPrimitive cand -> comparePrimitives(orig, cand, path);
             case JsonNull _ when candidate instanceof JsonNull _ -> List.of();
-            default -> List.of(
-                    new Discrepancy.ValueMismatch(path, original.displayValue(), candidate.displayValue()));
+            default -> List.of(new Discrepancy.ValueMismatch(path, original.displayValue(), candidate.displayValue()));
         };
     }
 
