@@ -11,6 +11,7 @@ import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.domain.http.RequestPath;
 import com.github.vitorpereiraa.sombra.domain.http.StatusCode;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
@@ -27,7 +28,8 @@ public final class CapturedExchangeMapper {
         var response = new HttpResponse(
             new StatusCode(event.response().statusCode()),
             toHeaders(event.response().headers()),
-            event.response().body().flatMap(HttpBody::of)
+            event.response().body().flatMap(HttpBody::of),
+            Duration.ofMillis(event.response().durationMs())
         );
 
         return new CapturedExchange(

@@ -2,6 +2,7 @@ package com.github.vitorpereiraa.sombra.service;
 
 import com.github.vitorpereiraa.sombra.domain.http.HttpRequest;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
+import java.time.Duration;
 import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -26,6 +27,7 @@ public class CandidateReplayService {
 
         request.body().ifPresent(body -> spec.body(body.content()));
 
-        return spec.exchange((_, res) -> ReplayMapper.toDomain(res));
+        long startNs = System.nanoTime();
+        return spec.exchange((_, res) -> ReplayMapper.toDomain(res, Duration.ofNanos(System.nanoTime() - startNs)));
     }
 }
