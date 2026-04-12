@@ -1,9 +1,11 @@
 package com.github.vitorpereiraa.sombra.service;
 
 import com.github.vitorpereiraa.sombra.domain.json.JsonArray;
+import com.github.vitorpereiraa.sombra.domain.json.JsonBoolean;
 import com.github.vitorpereiraa.sombra.domain.json.JsonNull;
+import com.github.vitorpereiraa.sombra.domain.json.JsonNumber;
 import com.github.vitorpereiraa.sombra.domain.json.JsonObject;
-import com.github.vitorpereiraa.sombra.domain.json.JsonPrimitive;
+import com.github.vitorpereiraa.sombra.domain.json.JsonString;
 import com.github.vitorpereiraa.sombra.domain.json.JsonValue;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -29,6 +31,15 @@ class JsonValueMapper {
             }
             return new JsonArray(elements);
         }
-        return new JsonPrimitive(node.toString());
+        if (node.isTextual()) {
+            return new JsonString(node.textValue());
+        }
+        if (node.isNumber()) {
+            return new JsonNumber(node.decimalValue());
+        }
+        if (node.isBoolean()) {
+            return new JsonBoolean(node.booleanValue());
+        }
+        throw new IllegalArgumentException("Unsupported JSON node kind: " + node.getNodeType());
     }
 }

@@ -28,9 +28,29 @@ public class JsonComparator {
             case JsonObject orig when candidate instanceof JsonObject cand -> compareObjects(orig, cand, path);
             case JsonArray orig when candidate instanceof JsonArray cand -> compareArrays(orig, cand, path);
             case JsonPrimitive orig when candidate instanceof JsonPrimitive cand -> comparePrimitives(orig, cand, path);
-            case JsonNull _ when candidate instanceof JsonNull _ -> List.of();
-            default -> List.of(new Discrepancy.TypeMismatch(new ResponseField.Body(path)));
+            default -> typeMismatch(path);
         };
+    }
+
+    static List<Discrepancy> comparePrimitives(JsonPrimitive original, JsonPrimitive candidate, FieldPath path) {
+        return switch (original) {
+            case JsonString orig when candidate instanceof JsonString cand ->
+                orig.value().equals(cand.value()) ? List.of() : valueMismatch(path);
+            case JsonNumber orig when candidate instanceof JsonNumber cand ->
+                orig.value().compareTo(cand.value()) == 0 ? List.of() : valueMismatch(path);
+            case JsonBoolean orig when candidate instanceof JsonBoolean cand ->
+                orig.value() == cand.value() ? List.of() : valueMismatch(path);
+            case JsonNull _ when candidate instanceof JsonNull _ -> List.of();
+            default -> typeMismatch(path);
+        };
+    }
+
+    static List<Discrepancy> valueMismatch(FieldPath path) {
+        return List.of(new Discrepancy.ValueMismatch(new ResponseField.Body(path)));
+    }
+
+    static List<Discrepancy> typeMismatch(FieldPath path) {
+        return List.of(new Discrepancy.TypeMismatch(new ResponseField.Body(path)));
     }
 
     List<Discrepancy> compareObjects(JsonObject original, JsonObject candidate, FieldPath path) {
@@ -89,12 +109,5 @@ public class JsonComparator {
 
     static List<JsonValue> sortByString(List<JsonValue> elements) {
         return elements.stream().sorted(Comparator.comparing(Object::toString)).toList();
-    }
-
-    static List<Discrepancy> comparePrimitives(JsonPrimitive original, JsonPrimitive candidate, FieldPath path) {
-        if (original.value().equals(candidate.value())) {
-            return List.of();
-        }
-        return List.of(new Discrepancy.ValueMismatch(new ResponseField.Body(path)));
     }
 }
