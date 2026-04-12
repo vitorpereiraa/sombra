@@ -29,6 +29,6 @@ class JsonValueMapper {
             }
             return new JsonArray(elements);
         }
-        return new JsonPrimitive(node.asString());
+        return new JsonPrimitive(node.toString());
     }
 }

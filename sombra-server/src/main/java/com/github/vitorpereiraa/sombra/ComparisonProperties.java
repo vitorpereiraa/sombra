@@ -1,7 +1,5 @@
 package com.github.vitorpereiraa.sombra;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import java.util.List;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -9,6 +7,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 public record ComparisonProperties(List<String> ignoredFields) {
 
     public ComparisonProperties {
-        checkArgument(ignoredFields != null, "sombra.server.comparison.ignored-fields must be configured");
+        if (ignoredFields == null) {
+            ignoredFields = List.of();
+        }
     }
 }

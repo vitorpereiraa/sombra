@@ -6,14 +6,19 @@ import com.github.vitorpereiraa.sombra.domain.Discrepancy;
 import com.github.vitorpereiraa.sombra.domain.FieldPath;
 import com.github.vitorpereiraa.sombra.domain.HttpResponse;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 @Component
 public class ResponseComparisonService {
+
+    private static final Logger log = LoggerFactory.getLogger(ResponseComparisonService.class);
 
     private final JsonMapper jsonMapper;
     private final Set<FieldPath> ignoredFields;
@@ -36,7 +41,7 @@ public class ResponseComparisonService {
                     String.valueOf(candidate.statusCode().value())));
         }
 
-        compareBody(original, candidate, discrepancies);
+        discrepancies.addAll(compareBody(original, candidate));
 
         var result = new ComparisonResult(discrepancies);
         lastResult = result;
@@ -47,22 +52,20 @@ public class ResponseComparisonService {
         return lastResult;
     }
 
-    void compareBody(HttpResponse original, HttpResponse candidate, ArrayList<Discrepancy> discrepancies) {
+    List<Discrepancy> compareBody(HttpResponse original, HttpResponse candidate) {
         var originalBody = original.body();
         var candidateBody = candidate.body();
 
         if (originalBody.isEmpty() && candidateBody.isEmpty()) {
-            return;
+            return List.of();
         }
 
         if (originalBody.isEmpty()) {
-            discrepancies.add(new Discrepancy(new FieldPath("/body"), "<absent>", candidateBody.get().content()));
-            return;
+            return List.of(new Discrepancy(new FieldPath("/body"), "<absent>", candidateBody.get().content()));
         }
 
         if (candidateBody.isEmpty()) {
-            discrepancies.add(new Discrepancy(new FieldPath("/body"), originalBody.get().content(), "<absent>"));
-            return;
+            return List.of(new Discrepancy(new FieldPath("/body"), originalBody.get().content(), "<absent>"));
         }
 
         var originalContent = originalBody.get().content();
@@ -71,11 +74,13 @@ public class ResponseComparisonService {
         try {
             var originalJson = JsonValueMapper.toDomain(jsonMapper.readTree(originalContent));
             var candidateJson = JsonValueMapper.toDomain(jsonMapper.readTree(candidateContent));
-            discrepancies.addAll(BodyComparator.compare(originalJson, candidateJson, new FieldPath("/body"), ignoredFields));
+            return BodyComparator.compare(originalJson, candidateJson, new FieldPath("/body"), ignoredFields);
         } catch (JacksonException e) {
+            log.debug("Bodies are not valid JSON, falling back to string comparison", e);
             if (!originalContent.equals(candidateContent)) {
-                discrepancies.add(new Discrepancy(new FieldPath("/body"), originalContent, candidateContent));
+                return List.of(new Discrepancy(new FieldPath("/body"), originalContent, candidateContent));
             }
+            return List.of();
         }
     }
 }
