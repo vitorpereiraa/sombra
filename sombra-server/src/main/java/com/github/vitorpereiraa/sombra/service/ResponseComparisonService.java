@@ -1,10 +1,11 @@
 package com.github.vitorpereiraa.sombra.service;
 
 import com.github.vitorpereiraa.sombra.ComparisonProperties;
-import com.github.vitorpereiraa.sombra.domain.ComparisonResult;
-import com.github.vitorpereiraa.sombra.domain.Discrepancy;
-import com.github.vitorpereiraa.sombra.domain.FieldPath;
-import com.github.vitorpereiraa.sombra.domain.HttpResponse;
+import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
+import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
+import com.github.vitorpereiraa.sombra.domain.comparison.FieldPath;
+import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
+import com.github.vitorpereiraa.sombra.domain.json.JsonComparator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -35,7 +36,7 @@ public class ResponseComparisonService {
         var discrepancies = new ArrayList<Discrepancy>();
 
         if (original.statusCode().value() != candidate.statusCode().value()) {
-            discrepancies.add(new Discrepancy(
+            discrepancies.add(new Discrepancy.ValueMismatch(
                     new FieldPath("/statusCode"),
                     String.valueOf(original.statusCode().value()),
                     String.valueOf(candidate.statusCode().value())));
@@ -61,11 +62,11 @@ public class ResponseComparisonService {
         }
 
         if (originalBody.isEmpty()) {
-            return List.of(new Discrepancy(new FieldPath("/body"), "<absent>", candidateBody.get().content()));
+            return List.of(new Discrepancy.FieldAdded(new FieldPath("/body"), candidateBody.get().content()));
         }
 
         if (candidateBody.isEmpty()) {
-            return List.of(new Discrepancy(new FieldPath("/body"), originalBody.get().content(), "<absent>"));
+            return List.of(new Discrepancy.FieldRemoved(new FieldPath("/body"), originalBody.get().content()));
         }
 
         var originalContent = originalBody.get().content();
@@ -74,11 +75,11 @@ public class ResponseComparisonService {
         try {
             var originalJson = JsonValueMapper.toDomain(jsonMapper.readTree(originalContent));
             var candidateJson = JsonValueMapper.toDomain(jsonMapper.readTree(candidateContent));
-            return BodyComparator.compare(originalJson, candidateJson, new FieldPath("/body"), ignoredFields);
+            return JsonComparator.compare(originalJson, candidateJson, new FieldPath("/body"), ignoredFields);
         } catch (JacksonException e) {
             log.debug("Bodies are not valid JSON, falling back to string comparison", e);
             if (!originalContent.equals(candidateContent)) {
-                return List.of(new Discrepancy(new FieldPath("/body"), originalContent, candidateContent));
+                return List.of(new Discrepancy.ValueMismatch(new FieldPath("/body"), originalContent, candidateContent));
             }
             return List.of();
         }

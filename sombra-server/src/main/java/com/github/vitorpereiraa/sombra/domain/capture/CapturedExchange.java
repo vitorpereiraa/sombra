@@ -1,5 +1,7 @@
-package com.github.vitorpereiraa.sombra.domain;
+package com.github.vitorpereiraa.sombra.domain.capture;
 
+import com.github.vitorpereiraa.sombra.domain.http.HttpRequest;
+import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import java.time.Instant;
 import java.util.Optional;
 

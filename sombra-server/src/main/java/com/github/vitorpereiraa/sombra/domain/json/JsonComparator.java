@@ -1,30 +1,30 @@
-package com.github.vitorpereiraa.sombra.service;
+package com.github.vitorpereiraa.sombra.domain.json;
 
-import com.github.vitorpereiraa.sombra.domain.Discrepancy;
-import com.github.vitorpereiraa.sombra.domain.FieldPath;
-import com.github.vitorpereiraa.sombra.domain.json.JsonArray;
-import com.github.vitorpereiraa.sombra.domain.json.JsonNull;
-import com.github.vitorpereiraa.sombra.domain.json.JsonObject;
-import com.github.vitorpereiraa.sombra.domain.json.JsonPrimitive;
-import com.github.vitorpereiraa.sombra.domain.json.JsonValue;
+import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
+import com.github.vitorpereiraa.sombra.domain.comparison.FieldPath;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
-class BodyComparator {
+public class JsonComparator {
 
-    static List<Discrepancy> compare(JsonValue original, JsonValue candidate, FieldPath path, Set<FieldPath> ignoredFields) {
+    public static List<Discrepancy> compare(
+            JsonValue original, JsonValue candidate, FieldPath path, Set<FieldPath> ignoredFields) {
         if (path.isIgnoredBy(ignoredFields)) {
             return List.of();
         }
 
         return switch (original) {
-            case JsonObject orig when candidate instanceof JsonObject cand -> compareObjects(orig, cand, path, ignoredFields);
-            case JsonArray orig when candidate instanceof JsonArray cand -> compareArrays(orig, cand, path, ignoredFields);
-            case JsonPrimitive orig when candidate instanceof JsonPrimitive cand -> comparePrimitives(orig, cand, path);
+            case JsonObject orig when candidate instanceof JsonObject cand ->
+                    compareObjects(orig, cand, path, ignoredFields);
+            case JsonArray orig when candidate instanceof JsonArray cand ->
+                    compareArrays(orig, cand, path, ignoredFields);
+            case JsonPrimitive orig when candidate instanceof JsonPrimitive cand ->
+                    comparePrimitives(orig, cand, path);
             case JsonNull _ when candidate instanceof JsonNull _ -> List.of();
-            default -> List.of(new Discrepancy(path, stringify(original), stringify(candidate)));
+            default -> List.of(
+                    new Discrepancy.ValueMismatch(path, original.displayValue(), candidate.displayValue()));
         };
     }
 
@@ -44,9 +44,9 @@ class BodyComparator {
             var candValue = candidate.fields().get(key);
 
             if (origValue == null) {
-                discrepancies.add(new Discrepancy(fieldPath, "<absent>", stringify(candValue)));
+                discrepancies.add(new Discrepancy.FieldAdded(fieldPath, candValue.displayValue()));
             } else if (candValue == null) {
-                discrepancies.add(new Discrepancy(fieldPath, stringify(origValue), "<absent>"));
+                discrepancies.add(new Discrepancy.FieldRemoved(fieldPath, origValue.displayValue()));
             } else {
                 discrepancies.addAll(compare(origValue, candValue, fieldPath, ignoredFields));
             }
@@ -66,11 +66,14 @@ class BodyComparator {
             }
 
             if (i >= original.elements().size()) {
-                discrepancies.add(new Discrepancy(elementPath, "<absent>", stringify(candidate.elements().get(i))));
+                discrepancies.add(
+                        new Discrepancy.FieldAdded(elementPath, candidate.elements().get(i).displayValue()));
             } else if (i >= candidate.elements().size()) {
-                discrepancies.add(new Discrepancy(elementPath, stringify(original.elements().get(i)), "<absent>"));
+                discrepancies.add(
+                        new Discrepancy.FieldRemoved(elementPath, original.elements().get(i).displayValue()));
             } else {
-                discrepancies.addAll(compare(original.elements().get(i), candidate.elements().get(i), elementPath, ignoredFields));
+                discrepancies.addAll(
+                        compare(original.elements().get(i), candidate.elements().get(i), elementPath, ignoredFields));
             }
         }
         return discrepancies;
@@ -80,15 +83,6 @@ class BodyComparator {
         if (original.value().equals(candidate.value())) {
             return List.of();
         }
-        return List.of(new Discrepancy(path, original.value(), candidate.value()));
-    }
-
-    static String stringify(JsonValue value) {
-        return switch (value) {
-            case JsonPrimitive p -> p.value();
-            case JsonNull _ -> "null";
-            case JsonObject _ -> "<object>";
-            case JsonArray _ -> "<array>";
-        };
+        return List.of(new Discrepancy.ValueMismatch(path, original.value(), candidate.value()));
     }
 }
