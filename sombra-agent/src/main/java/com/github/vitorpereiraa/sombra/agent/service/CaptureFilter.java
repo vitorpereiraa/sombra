@@ -36,11 +36,13 @@ public class CaptureFilter extends OncePerRequestFilter {
         var wrappedRequest = new ContentCachingRequestWrapper(request, contentLength);
         var wrappedResponse = new ContentCachingResponseWrapper(response);
 
+        long startNs = System.nanoTime();
         try {
             filterChain.doFilter(wrappedRequest, wrappedResponse);
         } finally {
+            long durationMs = (System.nanoTime() - startNs) / 1_000_000L;
             try {
-                var event = CapturedExchangeEventMapper.toEvent(wrappedRequest, wrappedResponse);
+                var event = CapturedExchangeEventMapper.toEvent(wrappedRequest, wrappedResponse, durationMs);
                 producer.send(event);
             } catch (Exception e) {
                 log.error("Failed to capture exchange", e);

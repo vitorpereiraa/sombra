@@ -1,8 +1,11 @@
 package com.github.vitorpereiraa.sombra.streaming;
 
 import com.github.vitorpereiraa.sombra.agent.streaming.dto.CapturedExchangeEvent;
+import com.github.vitorpereiraa.sombra.reporting.ReplayErrorClassifier;
+import com.github.vitorpereiraa.sombra.reporting.ReportingService;
 import com.github.vitorpereiraa.sombra.service.CandidateReplayService;
 import com.github.vitorpereiraa.sombra.service.ResponseComparisonService;
+import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -15,44 +18,39 @@ public class CapturedExchangeConsumer {
 
     private final CandidateReplayService replayService;
     private final ResponseComparisonService comparisonService;
+    private final ReportingService reportingService;
 
     public CapturedExchangeConsumer(
-            CandidateReplayService replayService, ResponseComparisonService comparisonService) {
+            CandidateReplayService replayService,
+            ResponseComparisonService comparisonService,
+            ReportingService reportingService) {
         this.replayService = replayService;
         this.comparisonService = comparisonService;
+        this.reportingService = reportingService;
     }
 
     @KafkaListener(topics = "${sombra.server.topic-name}")
     public void consume(CapturedExchangeEvent event) {
         var exchange = CapturedExchangeMapper.toDomain(event);
-        log.info(
+        log.debug(
                 "Received captured exchange: {} {} -> {}",
                 exchange.request().method(),
                 exchange.request().path().value(),
                 exchange.response().statusCode().value());
+
+        long replayStartNs = System.nanoTime();
         try {
             var replayedResponse = replayService.replay(exchange.request());
-            log.info(
-                    "Replayed exchange: {} {} -> {}",
-                    exchange.request().method(),
-                    exchange.request().path().value(),
-                    replayedResponse.statusCode().value());
+            var replayDuration = replayedResponse.duration();
 
+            long comparisonStartNs = System.nanoTime();
             var result = comparisonService.compare(exchange.response(), replayedResponse);
-            if (result.matched()) {
-                log.info(
-                        "Comparison matched: {} {}",
-                        exchange.request().method(),
-                        exchange.request().path().value());
-            } else {
-                log.warn(
-                        "Comparison found {} discrepancies for {} {}: {}",
-                        result.discrepancies().size(),
-                        exchange.request().method(),
-                        exchange.request().path().value(),
-                        result.discrepancies());
-            }
+            var comparisonDuration = Duration.ofNanos(System.nanoTime() - comparisonStartNs);
+
+            reportingService.reportSuccess(exchange, replayedResponse, result, replayDuration, comparisonDuration);
         } catch (Exception e) {
+            var replayDuration = Duration.ofNanos(System.nanoTime() - replayStartNs);
+            reportingService.reportError(exchange, replayDuration, ReplayErrorClassifier.classify(e), e);
             log.error(
                     "Failed to replay exchange: {} {}",
                     exchange.request().method(),

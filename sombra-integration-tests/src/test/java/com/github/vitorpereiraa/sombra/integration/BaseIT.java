@@ -35,6 +35,7 @@ public abstract class BaseIT {
         registry.add("sombra.agent.topic-name", () -> "sombra.captured-exchanges");
         registry.add("sombra.server.topic-name", () -> "sombra.captured-exchanges");
         registry.add("sombra.server.candidate-url", () -> "http://localhost:" + port);
+        registry.add("sombra.reporting.logging.include-match-details", () -> "true");
         registry.add(
                 "spring.kafka.producer.key-serializer", () -> "org.apache.kafka.common.serialization.StringSerializer");
         registry.add(
