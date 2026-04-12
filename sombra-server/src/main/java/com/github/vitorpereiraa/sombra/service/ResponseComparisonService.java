@@ -5,10 +5,13 @@ import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
 import com.github.vitorpereiraa.sombra.domain.comparison.FieldPath;
 import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
+import com.github.vitorpereiraa.sombra.domain.http.HttpHeader;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.domain.json.JsonComparator;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -23,14 +26,21 @@ public class ResponseComparisonService {
     private static final Logger log = LoggerFactory.getLogger(ResponseComparisonService.class);
 
     private final JsonMapper jsonMapper;
-    private final Set<FieldPath> ignoredFields;
+    private final JsonComparator jsonComparator;
+    private final boolean compareHeaders;
+    private final Set<String> ignoredHeaders;
     private volatile ComparisonResult lastResult;
 
     public ResponseComparisonService(ComparisonProperties properties, JsonMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
-        this.ignoredFields = properties.ignoredFields().stream()
+        this.compareHeaders = properties.compareHeaders();
+        this.ignoredHeaders = properties.ignoredHeaders().stream()
+                .map(String::toLowerCase)
+                .collect(Collectors.toUnmodifiableSet());
+        var ignoredFields = properties.ignoredFields().stream()
                 .map(FieldPath::new)
                 .collect(Collectors.toUnmodifiableSet());
+        this.jsonComparator = new JsonComparator(ignoredFields, properties.ignoreArrayOrder());
     }
 
     public ComparisonResult compare(HttpResponse original, HttpResponse candidate) {
@@ -38,6 +48,10 @@ public class ResponseComparisonService {
 
         if (original.statusCode().value() != candidate.statusCode().value()) {
             discrepancies.add(new Discrepancy.ValueMismatch(new ResponseField.StatusCode()));
+        }
+
+        if (compareHeaders) {
+            discrepancies.addAll(compareHeaders(original, candidate));
         }
 
         discrepancies.addAll(compareBody(original, candidate));
@@ -49,6 +63,44 @@ public class ResponseComparisonService {
 
     public ComparisonResult lastResult() {
         return lastResult;
+    }
+
+    List<Discrepancy> compareHeaders(HttpResponse original, HttpResponse candidate) {
+        var discrepancies = new ArrayList<Discrepancy>();
+        var origHeaders = toHeaderMap(original.headers());
+        var candHeaders = toHeaderMap(candidate.headers());
+
+        var allNames = new LinkedHashSet<>(origHeaders.keySet());
+        allNames.addAll(candHeaders.keySet());
+
+        for (var name : allNames) {
+            if (ignoredHeaders.contains(name)) {
+                continue;
+            }
+
+            var origValues = origHeaders.get(name);
+            var candValues = candHeaders.get(name);
+
+            if (origValues == null) {
+                discrepancies.add(new Discrepancy.FieldAdded(new ResponseField.Header(name)));
+            } else if (candValues == null) {
+                discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Header(name)));
+            } else if (!origValues.equals(candValues)) {
+                discrepancies.add(new Discrepancy.ValueMismatch(new ResponseField.Header(name)));
+            }
+        }
+        return discrepancies;
+    }
+
+    static Map<String, List<String>> toHeaderMap(List<HttpHeader> headers) {
+        return headers.stream().collect(Collectors.toMap(
+                h -> h.name().toLowerCase(),
+                HttpHeader::values,
+                (a, b) -> {
+                    var merged = new ArrayList<>(a);
+                    merged.addAll(b);
+                    return List.copyOf(merged);
+                }));
     }
 
     List<Discrepancy> compareBody(HttpResponse original, HttpResponse candidate) {
@@ -73,7 +125,7 @@ public class ResponseComparisonService {
         try {
             var originalJson = JsonValueMapper.toDomain(jsonMapper.readTree(originalContent));
             var candidateJson = JsonValueMapper.toDomain(jsonMapper.readTree(candidateContent));
-            return JsonComparator.compare(originalJson, candidateJson, new FieldPath("/"), ignoredFields);
+            return jsonComparator.compare(originalJson, candidateJson, new FieldPath("/"));
         } catch (JacksonException e) {
             log.debug("Bodies are not valid JSON, falling back to string comparison", e);
             if (!originalContent.equals(candidateContent)) {

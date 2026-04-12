@@ -4,6 +4,9 @@ sombra:
     candidate-url: http://localhost:8083
     comparison:
       ignored-fields: []
+      ignore-array-order: false
+      compare-headers: false
+      ignored-headers: []
 
 spring:
   docker:
