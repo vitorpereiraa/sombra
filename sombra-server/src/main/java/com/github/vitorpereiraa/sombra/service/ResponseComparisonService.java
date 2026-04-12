@@ -33,14 +33,14 @@ public class ResponseComparisonService {
 
     public ResponseComparisonService(ComparisonProperties properties, JsonMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
-        this.compareHeaders = properties.compareHeaders();
-        this.ignoredHeaders = properties.ignoredHeaders().stream()
+        this.compareHeaders = properties.compareHeaders().orElse(false);
+        this.ignoredHeaders = properties.ignoredHeaders().orElse(List.of()).stream()
                 .map(String::toLowerCase)
                 .collect(Collectors.toUnmodifiableSet());
-        var ignoredFields = properties.ignoredFields().stream()
+        var ignoredFields = properties.ignoredFields().orElse(List.of()).stream()
                 .map(FieldPath::new)
                 .collect(Collectors.toUnmodifiableSet());
-        this.jsonComparator = new JsonComparator(ignoredFields, properties.ignoreArrayOrder());
+        this.jsonComparator = new JsonComparator(ignoredFields, properties.ignoreArrayOrder().orElse(false));
     }
 
     public ComparisonResult compare(HttpResponse original, HttpResponse candidate) {
