@@ -3,6 +3,7 @@ package com.github.vitorpereiraa.sombra.integration;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
+import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
 import com.github.vitorpereiraa.sombra.service.ResponseComparisonService;
 import java.time.Duration;
 import org.junit.jupiter.api.Test;
@@ -47,7 +48,9 @@ class ComparisonIT extends BaseIT {
                     var result = comparisonService.lastResult();
                     assertThat(result).isNotNull();
                     assertThat(result.matched()).isFalse();
-                    assertThat(result.discrepancies()).anyMatch(d -> d.path().value().equals("/body/name"));
+                    assertThat(result.discrepancies())
+                            .anyMatch(d -> d.field() instanceof ResponseField.Body(var path)
+                                    && path.value().equals("/name"));
                 });
     }
 }

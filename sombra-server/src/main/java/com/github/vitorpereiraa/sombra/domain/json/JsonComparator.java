@@ -2,6 +2,7 @@ package com.github.vitorpereiraa.sombra.domain.json;
 
 import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
 import com.github.vitorpereiraa.sombra.domain.comparison.FieldPath;
+import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -20,7 +21,7 @@ public class JsonComparator {
             case JsonArray orig when candidate instanceof JsonArray cand -> compareArrays(orig, cand, path, ignoredFields);
             case JsonPrimitive orig when candidate instanceof JsonPrimitive cand -> comparePrimitives(orig, cand, path);
             case JsonNull _ when candidate instanceof JsonNull _ -> List.of();
-            default -> List.of(new Discrepancy.ValueMismatch(path, original.displayValue(), candidate.displayValue()));
+            default -> List.of(new Discrepancy.ValueMismatch(new ResponseField.Body(path)));
         };
     }
 
@@ -40,9 +41,9 @@ public class JsonComparator {
             var candValue = candidate.fields().get(key);
 
             if (origValue == null) {
-                discrepancies.add(new Discrepancy.FieldAdded(fieldPath, candValue.displayValue()));
+                discrepancies.add(new Discrepancy.FieldAdded(new ResponseField.Body(fieldPath)));
             } else if (candValue == null) {
-                discrepancies.add(new Discrepancy.FieldRemoved(fieldPath, origValue.displayValue()));
+                discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Body(fieldPath)));
             } else {
                 discrepancies.addAll(compare(origValue, candValue, fieldPath, ignoredFields));
             }
@@ -62,14 +63,11 @@ public class JsonComparator {
             }
 
             if (i >= original.elements().size()) {
-                discrepancies.add(
-                        new Discrepancy.FieldAdded(elementPath, candidate.elements().get(i).displayValue()));
+                discrepancies.add(new Discrepancy.FieldAdded(new ResponseField.Body(elementPath)));
             } else if (i >= candidate.elements().size()) {
-                discrepancies.add(
-                        new Discrepancy.FieldRemoved(elementPath, original.elements().get(i).displayValue()));
+                discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Body(elementPath)));
             } else {
-                discrepancies.addAll(
-                        compare(original.elements().get(i), candidate.elements().get(i), elementPath, ignoredFields));
+                discrepancies.addAll(compare(original.elements().get(i), candidate.elements().get(i), elementPath, ignoredFields));
             }
         }
         return discrepancies;
@@ -79,6 +77,6 @@ public class JsonComparator {
         if (original.value().equals(candidate.value())) {
             return List.of();
         }
-        return List.of(new Discrepancy.ValueMismatch(path, original.value(), candidate.value()));
+        return List.of(new Discrepancy.ValueMismatch(new ResponseField.Body(path)));
     }
 }

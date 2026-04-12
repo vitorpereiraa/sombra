@@ -19,7 +19,7 @@ class ComparisonIgnoredFieldsIT extends BaseIT {
 
     @DynamicPropertySource
     static void configureIgnoredFields(DynamicPropertyRegistry registry) {
-        registry.add("sombra.server.comparison.ignored-fields", () -> List.of("/body/name", "/body/value"));
+        registry.add("sombra.server.comparison.ignored-fields", () -> List.of("/name", "/value"));
     }
 
     @Test

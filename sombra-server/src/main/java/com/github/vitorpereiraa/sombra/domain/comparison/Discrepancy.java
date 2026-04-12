@@ -4,30 +4,26 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 public sealed interface Discrepancy {
 
-    FieldPath path();
+    ResponseField field();
 
-    record ValueMismatch(FieldPath path, String expected, String actual) implements Discrepancy {
+    record ValueMismatch(ResponseField field) implements Discrepancy {
 
         public ValueMismatch {
-            checkArgument(path != null, "ValueMismatch path cannot be null");
-            checkArgument(expected != null, "ValueMismatch expected cannot be null");
-            checkArgument(actual != null, "ValueMismatch actual cannot be null");
+            checkArgument(field != null, "ValueMismatch field cannot be null");
         }
     }
 
-    record FieldAdded(FieldPath path, String value) implements Discrepancy {
+    record FieldAdded(ResponseField field) implements Discrepancy {
 
         public FieldAdded {
-            checkArgument(path != null, "FieldAdded path cannot be null");
-            checkArgument(value != null, "FieldAdded value cannot be null");
+            checkArgument(field != null, "FieldAdded field cannot be null");
         }
     }
 
-    record FieldRemoved(FieldPath path, String value) implements Discrepancy {
+    record FieldRemoved(ResponseField field) implements Discrepancy {
 
         public FieldRemoved {
-            checkArgument(path != null, "FieldRemoved path cannot be null");
-            checkArgument(value != null, "FieldRemoved value cannot be null");
+            checkArgument(field != null, "FieldRemoved field cannot be null");
         }
     }
 }

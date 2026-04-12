@@ -4,6 +4,7 @@ import com.github.vitorpereiraa.sombra.ComparisonProperties;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
 import com.github.vitorpereiraa.sombra.domain.comparison.FieldPath;
+import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.domain.json.JsonComparator;
 import java.util.ArrayList;
@@ -36,15 +37,12 @@ public class ResponseComparisonService {
         var discrepancies = new ArrayList<Discrepancy>();
 
         if (original.statusCode().value() != candidate.statusCode().value()) {
-            discrepancies.add(new Discrepancy.ValueMismatch(
-                    new FieldPath("/statusCode"),
-                    String.valueOf(original.statusCode().value()),
-                    String.valueOf(candidate.statusCode().value())));
+            discrepancies.add(new Discrepancy.ValueMismatch(new ResponseField.StatusCode()));
         }
 
         discrepancies.addAll(compareBody(original, candidate));
 
-        var result = new ComparisonResult(discrepancies);
+        var result = new ComparisonResult(original, candidate, discrepancies);
         lastResult = result;
         return result;
     }
@@ -62,11 +60,11 @@ public class ResponseComparisonService {
         }
 
         if (originalBody.isEmpty()) {
-            return List.of(new Discrepancy.FieldAdded(new FieldPath("/body"), candidateBody.get().content()));
+            return List.of(new Discrepancy.FieldAdded(new ResponseField.Body(new FieldPath("/"))));
         }
 
         if (candidateBody.isEmpty()) {
-            return List.of(new Discrepancy.FieldRemoved(new FieldPath("/body"), originalBody.get().content()));
+            return List.of(new Discrepancy.FieldRemoved(new ResponseField.Body(new FieldPath("/"))));
         }
 
         var originalContent = originalBody.get().content();
@@ -75,11 +73,11 @@ public class ResponseComparisonService {
         try {
             var originalJson = JsonValueMapper.toDomain(jsonMapper.readTree(originalContent));
             var candidateJson = JsonValueMapper.toDomain(jsonMapper.readTree(candidateContent));
-            return JsonComparator.compare(originalJson, candidateJson, new FieldPath("/body"), ignoredFields);
+            return JsonComparator.compare(originalJson, candidateJson, new FieldPath("/"), ignoredFields);
         } catch (JacksonException e) {
             log.debug("Bodies are not valid JSON, falling back to string comparison", e);
             if (!originalContent.equals(candidateContent)) {
-                return List.of(new Discrepancy.ValueMismatch(new FieldPath("/body"), originalContent, candidateContent));
+                return List.of(new Discrepancy.ValueMismatch(new ResponseField.Body(new FieldPath("/"))));
             }
             return List.of();
         }

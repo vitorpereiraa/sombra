@@ -13,6 +13,9 @@ public record FieldPath(String value) {
     }
 
     public FieldPath append(String segment) {
+        if (value.equals("/")) {
+            return new FieldPath("/" + segment);
+        }
         return new FieldPath(value + "/" + segment);
     }
 
