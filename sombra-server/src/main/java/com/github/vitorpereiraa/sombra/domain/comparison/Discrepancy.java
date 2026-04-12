@@ -26,4 +26,11 @@ public sealed interface Discrepancy {
             checkArgument(field != null, "FieldRemoved field cannot be null");
         }
     }
+
+    record TypeMismatch(ResponseField field) implements Discrepancy {
+
+        public TypeMismatch {
+            checkArgument(field != null, "TypeMismatch field cannot be null");
+        }
+    }
 }

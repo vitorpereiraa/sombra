@@ -4,29 +4,36 @@ import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
 import com.github.vitorpereiraa.sombra.domain.comparison.FieldPath;
 import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 public class JsonComparator {
 
-    public static List<Discrepancy> compare(
-            JsonValue original, JsonValue candidate, FieldPath path, Set<FieldPath> ignoredFields) {
+    private final Set<FieldPath> ignoredFields;
+    private final boolean ignoreArrayOrder;
+
+    public JsonComparator(Set<FieldPath> ignoredFields, boolean ignoreArrayOrder) {
+        this.ignoredFields = ignoredFields;
+        this.ignoreArrayOrder = ignoreArrayOrder;
+    }
+
+    public List<Discrepancy> compare(JsonValue original, JsonValue candidate, FieldPath path) {
         if (path.isIgnoredBy(ignoredFields)) {
             return List.of();
         }
 
         return switch (original) {
-            case JsonObject orig when candidate instanceof JsonObject cand -> compareObjects(orig, cand, path, ignoredFields);
-            case JsonArray orig when candidate instanceof JsonArray cand -> compareArrays(orig, cand, path, ignoredFields);
+            case JsonObject orig when candidate instanceof JsonObject cand -> compareObjects(orig, cand, path);
+            case JsonArray orig when candidate instanceof JsonArray cand -> compareArrays(orig, cand, path);
             case JsonPrimitive orig when candidate instanceof JsonPrimitive cand -> comparePrimitives(orig, cand, path);
             case JsonNull _ when candidate instanceof JsonNull _ -> List.of();
-            default -> List.of(new Discrepancy.ValueMismatch(new ResponseField.Body(path)));
+            default -> List.of(new Discrepancy.TypeMismatch(new ResponseField.Body(path)));
         };
     }
 
-    static List<Discrepancy> compareObjects(
-            JsonObject original, JsonObject candidate, FieldPath path, Set<FieldPath> ignoredFields) {
+    List<Discrepancy> compareObjects(JsonObject original, JsonObject candidate, FieldPath path) {
         var discrepancies = new ArrayList<Discrepancy>();
         var allKeys = new LinkedHashSet<>(original.fields().keySet());
         allKeys.addAll(candidate.fields().keySet());
@@ -45,16 +52,23 @@ public class JsonComparator {
             } else if (candValue == null) {
                 discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Body(fieldPath)));
             } else {
-                discrepancies.addAll(compare(origValue, candValue, fieldPath, ignoredFields));
+                discrepancies.addAll(compare(origValue, candValue, fieldPath));
             }
         }
         return discrepancies;
     }
 
-    static List<Discrepancy> compareArrays(
-            JsonArray original, JsonArray candidate, FieldPath path, Set<FieldPath> ignoredFields) {
+    List<Discrepancy> compareArrays(JsonArray original, JsonArray candidate, FieldPath path) {
+        var origElements = original.elements();
+        var candElements = candidate.elements();
+
+        if (ignoreArrayOrder) {
+            origElements = sortByString(origElements);
+            candElements = sortByString(candElements);
+        }
+
         var discrepancies = new ArrayList<Discrepancy>();
-        int maxSize = Math.max(original.elements().size(), candidate.elements().size());
+        int maxSize = Math.max(origElements.size(), candElements.size());
 
         for (int i = 0; i < maxSize; i++) {
             var elementPath = path.append(String.valueOf(i));
@@ -62,15 +76,19 @@ public class JsonComparator {
                 continue;
             }
 
-            if (i >= original.elements().size()) {
+            if (i >= origElements.size()) {
                 discrepancies.add(new Discrepancy.FieldAdded(new ResponseField.Body(elementPath)));
-            } else if (i >= candidate.elements().size()) {
+            } else if (i >= candElements.size()) {
                 discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Body(elementPath)));
             } else {
-                discrepancies.addAll(compare(original.elements().get(i), candidate.elements().get(i), elementPath, ignoredFields));
+                discrepancies.addAll(compare(origElements.get(i), candElements.get(i), elementPath));
             }
         }
         return discrepancies;
+    }
+
+    static List<JsonValue> sortByString(List<JsonValue> elements) {
+        return elements.stream().sorted(Comparator.comparing(Object::toString)).toList();
     }
 
     static List<Discrepancy> comparePrimitives(JsonPrimitive original, JsonPrimitive candidate, FieldPath path) {

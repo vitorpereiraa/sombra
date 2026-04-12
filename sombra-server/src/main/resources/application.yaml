@@ -26,6 +26,9 @@ sombra:
     candidate-url: ${SOMBRA_CANDIDATE_URL}
     comparison:
       ignored-fields: []
+      ignore-array-order: false
+      compare-headers: false
+      ignored-headers: []
 
 server:
   port: 8080
