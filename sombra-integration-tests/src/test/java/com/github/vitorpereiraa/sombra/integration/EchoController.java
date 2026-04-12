@@ -30,6 +30,28 @@ class EchoController {
         return ResponseEntity.ok(body);
     }
 
+    @PostMapping("/echo/array-reordered")
+    ResponseEntity<String> echoArrayReordered(
+            @RequestBody String body,
+            @RequestHeader(value = "X-Sombra-Replay", required = false) String replayHeader) {
+        callCount.incrementAndGet();
+        if (replayHeader != null) {
+            return ResponseEntity.ok("[{\"id\":2},{\"id\":1}]");
+        }
+        return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/echo/non-json")
+    ResponseEntity<String> echoNonJson(
+            @RequestBody String body,
+            @RequestHeader(value = "X-Sombra-Replay", required = false) String replayHeader) {
+        callCount.incrementAndGet();
+        if (replayHeader != null) {
+            return ResponseEntity.ok("not json at all");
+        }
+        return ResponseEntity.ok(body);
+    }
+
     @GetMapping("/echo/count")
     ResponseEntity<Integer> count() {
         return ResponseEntity.ok(callCount.get());

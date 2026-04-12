@@ -8,10 +8,12 @@ import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
 import com.github.vitorpereiraa.sombra.domain.http.HttpHeader;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.domain.json.JsonComparator;
+import com.github.vitorpereiraa.sombra.domain.json.JsonValue;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
@@ -122,16 +124,26 @@ public class ResponseComparisonService {
         var originalContent = originalBody.get().content();
         var candidateContent = candidateBody.get().content();
 
+        var originalJson = parseJson(originalContent);
+        var candidateJson = parseJson(candidateContent);
+
+        if (originalJson.isPresent() && candidateJson.isPresent()) {
+            return jsonComparator.compare(originalJson.get(), candidateJson.get(), new FieldPath("/"));
+        }
+        if (originalJson.isEmpty() && candidateJson.isEmpty()) {
+            return originalContent.equals(candidateContent)
+                    ? List.of()
+                    : List.of(new Discrepancy.ValueMismatch(new ResponseField.Body()));
+        }
+        return List.of(new Discrepancy.TypeMismatch(new ResponseField.Body()));
+    }
+
+    Optional<JsonValue> parseJson(String content) {
         try {
-            var originalJson = JsonValueMapper.toDomain(jsonMapper.readTree(originalContent));
-            var candidateJson = JsonValueMapper.toDomain(jsonMapper.readTree(candidateContent));
-            return jsonComparator.compare(originalJson, candidateJson, new FieldPath("/"));
+            return Optional.of(JsonValueMapper.toDomain(jsonMapper.readTree(content)));
         } catch (JacksonException e) {
-            log.debug("Bodies are not valid JSON, falling back to string comparison", e);
-            if (!originalContent.equals(candidateContent)) {
-                return List.of(new Discrepancy.ValueMismatch(new ResponseField.Body()));
-            }
-            return List.of();
+            log.debug("Body is not valid JSON", e);
+            return Optional.empty();
         }
     }
 }
