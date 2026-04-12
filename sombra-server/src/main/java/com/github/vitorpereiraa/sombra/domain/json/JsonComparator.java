@@ -4,7 +4,6 @@ import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
 import com.github.vitorpereiraa.sombra.domain.comparison.FieldPath;
 import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -79,14 +78,12 @@ public class JsonComparator {
     }
 
     List<Discrepancy> compareArrays(JsonArray original, JsonArray candidate, FieldPath path) {
-        var origElements = original.elements();
-        var candElements = candidate.elements();
-
         if (ignoreArrayOrder) {
-            origElements = sortByString(origElements);
-            candElements = sortByString(candElements);
+            return compareArraysUnordered(original, candidate, path);
         }
 
+        var origElements = original.elements();
+        var candElements = candidate.elements();
         var discrepancies = new ArrayList<Discrepancy>();
         int maxSize = Math.max(origElements.size(), candElements.size());
 
@@ -107,7 +104,17 @@ public class JsonComparator {
         return discrepancies;
     }
 
-    static List<JsonValue> sortByString(List<JsonValue> elements) {
-        return elements.stream().sorted(Comparator.comparing(Object::toString)).toList();
+    static List<Discrepancy> compareArraysUnordered(JsonArray original, JsonArray candidate, FieldPath path) {
+        var remaining = new ArrayList<>(candidate.elements());
+        var discrepancies = new ArrayList<Discrepancy>();
+        for (var orig : original.elements()) {
+            if (!remaining.remove(orig)) {
+                discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Body(path)));
+            }
+        }
+        for (int i = 0; i < remaining.size(); i++) {
+            discrepancies.add(new Discrepancy.FieldAdded(new ResponseField.Body(path)));
+        }
+        return discrepancies;
     }
 }
