@@ -1,7 +1,7 @@
 package com.github.vitorpereiraa.sombra.streaming;
 
 import com.github.vitorpereiraa.sombra.agent.streaming.dto.CapturedExchangeEvent;
-import com.github.vitorpereiraa.sombra.reporting.ReplayErrorClassifier;
+import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.reporting.ReportingService;
 import com.github.vitorpereiraa.sombra.service.CandidateReplayService;
 import com.github.vitorpereiraa.sombra.service.ResponseComparisonService;
@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestClientException;
 
 @Component
 public class CapturedExchangeConsumer {
@@ -39,23 +40,25 @@ public class CapturedExchangeConsumer {
                 exchange.response().statusCode().value());
 
         long replayStartNs = System.nanoTime();
+        HttpResponse replayedResponse;
         try {
-            var replayedResponse = replayService.replay(exchange.request());
-            var replayDuration = replayedResponse.duration();
-
-            long comparisonStartNs = System.nanoTime();
-            var result = comparisonService.compare(exchange.response(), replayedResponse);
-            var comparisonDuration = Duration.ofNanos(System.nanoTime() - comparisonStartNs);
-
-            reportingService.reportSuccess(exchange, replayedResponse, result, replayDuration, comparisonDuration);
-        } catch (Exception e) {
+            replayedResponse = replayService.replay(exchange.request());
+        } catch (RestClientException e) {
             var replayDuration = Duration.ofNanos(System.nanoTime() - replayStartNs);
-            reportingService.reportError(exchange, replayDuration, ReplayErrorClassifier.classify(e), e);
+            reportingService.reportError(exchange, replayDuration, e);
             log.error(
                     "Failed to replay exchange: {} {}",
                     exchange.request().method(),
                     exchange.request().path().value(),
                     e);
+            return;
         }
+
+        long comparisonStartNs = System.nanoTime();
+        var result = comparisonService.compare(exchange.response(), replayedResponse);
+        var comparisonDuration = Duration.ofNanos(System.nanoTime() - comparisonStartNs);
+
+        reportingService.reportSuccess(
+                exchange, replayedResponse, result, replayedResponse.duration(), comparisonDuration);
     }
 }

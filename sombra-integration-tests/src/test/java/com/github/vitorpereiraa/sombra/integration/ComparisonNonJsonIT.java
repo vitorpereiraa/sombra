@@ -26,7 +26,7 @@ class ComparisonNonJsonIT extends BaseIT {
                 .expectStatus()
                 .isOk();
 
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofMillis(500))
                 .untilAsserted(() -> {
                     var result = comparisonService.lastResult();
                     assertThat(result).isNotNull();

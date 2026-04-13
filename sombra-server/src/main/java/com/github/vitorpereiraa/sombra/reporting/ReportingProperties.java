@@ -32,7 +32,7 @@ public record ReportingProperties(Metrics metrics, Logging logging) {
         }
     }
 
-    public record Logging(boolean enabled, int maxValueLength, boolean includeMatchDetails) {
+    public record Logging(boolean enabled, int maxValueLength) {
 
         public Logging {
             checkArgument(
