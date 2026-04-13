@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra.reporting;
+package com.github.vitorpereiraa.sombra.service;
 
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;

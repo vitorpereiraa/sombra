@@ -1,9 +1,11 @@
-package com.github.vitorpereiraa.sombra.reporting;
+package com.github.vitorpereiraa.sombra.service;
 
+import com.github.vitorpereiraa.sombra.config.ReportingProperties;
 import com.github.vitorpereiraa.sombra.domain.capture.CapturedExchange;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.domain.http.StatusCode;
+import com.github.vitorpereiraa.sombra.domain.reporting.ReportedDiscrepancy;
 import java.time.Duration;
 import org.springframework.stereotype.Component;
 

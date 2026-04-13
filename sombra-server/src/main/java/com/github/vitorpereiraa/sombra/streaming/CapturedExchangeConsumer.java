@@ -2,7 +2,7 @@ package com.github.vitorpereiraa.sombra.streaming;
 
 import com.github.vitorpereiraa.sombra.agent.streaming.dto.CapturedExchangeEvent;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
-import com.github.vitorpereiraa.sombra.reporting.ReportingService;
+import com.github.vitorpereiraa.sombra.service.ReportingService;
 import com.github.vitorpereiraa.sombra.service.CandidateReplayService;
 import com.github.vitorpereiraa.sombra.service.ResponseComparisonService;
 import java.time.Duration;

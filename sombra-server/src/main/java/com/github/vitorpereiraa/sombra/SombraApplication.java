@@ -1,6 +1,6 @@
 package com.github.vitorpereiraa.sombra;
 
-import com.github.vitorpereiraa.sombra.reporting.ReportingProperties;
+import com.github.vitorpereiraa.sombra.config.ReportingProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;

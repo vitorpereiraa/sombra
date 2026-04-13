@@ -37,7 +37,7 @@ class ReportingIT extends BaseIT {
     @BeforeEach
     void attachAppender() {
         var context = (LoggerContext) LoggerFactory.getILoggerFactory();
-        reportingLogger = context.getLogger("com.github.vitorpereiraa.sombra.reporting.ExchangeLogger");
+        reportingLogger = context.getLogger("com.github.vitorpereiraa.sombra.service.ExchangeLogger");
         reportingLogger.setLevel(Level.DEBUG);
         appender = new ListAppender<>();
         appender.setContext(context);
