@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
@@ -24,7 +25,7 @@ class ReportingIT extends BaseIT {
     private MeterRegistry meterRegistry;
 
     private ListAppender<ILoggingEvent> appender;
-    private ch.qos.logback.classic.Logger reportingLogger;
+    private Logger reportingLogger;
 
     @DynamicPropertySource
     static void enableMetrics(DynamicPropertyRegistry registry) {
@@ -60,7 +61,7 @@ class ReportingIT extends BaseIT {
                 .expectStatus()
                 .isOk();
 
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofMillis(500))
                 .untilAsserted(() -> {
                     var count = meterRegistry
                             .counter(
@@ -87,7 +88,7 @@ class ReportingIT extends BaseIT {
                 .expectStatus()
                 .isOk();
 
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofMillis(500))
                 .untilAsserted(() -> {
                     var processed = meterRegistry
                             .counter(

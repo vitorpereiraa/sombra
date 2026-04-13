@@ -34,7 +34,6 @@ sombra:
     logging:
       enabled: true
       max-value-length: 512
-      include-match-details: false
 
 server:
   port: 8080

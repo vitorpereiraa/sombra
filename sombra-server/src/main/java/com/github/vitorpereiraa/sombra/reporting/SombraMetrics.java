@@ -35,8 +35,12 @@ public class SombraMetrics {
                 .record(duration);
     }
 
-    public void recordReplayError(String errorKind) {
-        registry.counter("sombra.replay.errors", "error_kind", errorKind).increment();
+    public void recordReplayErrorDuration(Duration duration, String method) {
+        registry.timer("sombra.replay.duration", "method", method, "outcome", "error").record(duration);
+    }
+
+    public void recordReplayError() {
+        registry.counter("sombra.replay.errors").increment();
     }
 
     public void recordComparisonDuration(Duration duration) {

@@ -3,6 +3,7 @@ package com.github.vitorpereiraa.sombra.reporting;
 import com.github.vitorpereiraa.sombra.domain.capture.CapturedExchange;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
+import com.github.vitorpereiraa.sombra.domain.http.StatusCode;
 import java.time.Duration;
 import org.springframework.stereotype.Component;
 
@@ -30,8 +31,8 @@ public class ReportingService {
 
         if (metricsEnabled) {
             var method = exchange.request().method().name();
-            var originalStatusClass = ReportingTags.statusClass(exchange.response().statusCode());
-            var candidateStatusClass = ReportingTags.statusClass(candidate.statusCode());
+            var originalStatusClass = statusClass(exchange.response().statusCode());
+            var candidateStatusClass = statusClass(candidate.statusCode());
             var outcome = result.matched() ? "match" : "mismatch";
 
             metrics.recordOriginalDuration(exchange.response().duration(), method, originalStatusClass);
@@ -39,31 +40,31 @@ public class ReportingService {
             metrics.recordComparisonDuration(comparisonDuration);
             metrics.recordProcessed(outcome, method, candidateStatusClass);
             for (var discrepancy : result.discrepancies()) {
-                metrics.recordDiscrepancy(
-                        discrepancy.getClass().getSimpleName(), ReportingTags.fieldKind(discrepancy.field()));
+                var reported = ReportedDiscrepancy.from(discrepancy);
+                metrics.recordDiscrepancy(reported.type(), reported.fieldKind());
             }
         }
 
         if (loggingEnabled) {
-            logger.log(exchange, candidate, result, replayDuration, null);
+            logger.logComparison(exchange, candidate, result, replayDuration);
         }
     }
 
-    public void reportError(CapturedExchange exchange, Duration replayDuration, String errorKind, Throwable error) {
+    public void reportError(CapturedExchange exchange, Duration replayDuration, Throwable error) {
         if (metricsEnabled) {
             var method = exchange.request().method().name();
             metrics.recordOriginalDuration(
-                    exchange.response().duration(), method, ReportingTags.statusClass(exchange.response().statusCode()));
-            metrics.recordReplayError(errorKind);
-            metrics.recordProcessed("error", method, ReportingTags.STATUS_CLASS_NONE);
-            if (replayDuration != null) {
-                metrics.recordReplayDuration(
-                        replayDuration, method, ReportingTags.STATUS_CLASS_NONE, "error");
-            }
+                    exchange.response().duration(), method, statusClass(exchange.response().statusCode()));
+            metrics.recordReplayError();
+            metrics.recordReplayErrorDuration(replayDuration, method);
         }
 
         if (loggingEnabled) {
-            logger.log(exchange, null, null, replayDuration, error);
+            logger.logReplayError(exchange, replayDuration, error);
         }
+    }
+
+    private static String statusClass(StatusCode statusCode) {
+        return (statusCode.value() / 100) + "xx";
     }
 }
