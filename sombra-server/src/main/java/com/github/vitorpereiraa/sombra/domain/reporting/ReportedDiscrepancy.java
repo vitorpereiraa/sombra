@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra.reporting;
+package com.github.vitorpereiraa.sombra.domain.reporting;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
@@ -7,10 +7,10 @@ import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
 import java.util.Optional;
 
 @JsonInclude(JsonInclude.Include.NON_ABSENT)
-record ReportedDiscrepancy(
+public record ReportedDiscrepancy(
         String type, String fieldKind, Optional<String> name, Optional<String> path) {
 
-    static ReportedDiscrepancy from(Discrepancy discrepancy) {
+    public static ReportedDiscrepancy from(Discrepancy discrepancy) {
         var type = discrepancy.getClass().getSimpleName();
         return switch (discrepancy.field()) {
             case ResponseField.StatusCode ignored ->

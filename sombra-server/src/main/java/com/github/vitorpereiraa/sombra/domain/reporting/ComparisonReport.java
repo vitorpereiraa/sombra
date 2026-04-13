@@ -1,8 +1,8 @@
-package com.github.vitorpereiraa.sombra.reporting;
+package com.github.vitorpereiraa.sombra.domain.reporting;
 
 import java.util.List;
 
-sealed interface ComparisonReport {
+public sealed interface ComparisonReport {
 
     String traceId();
 

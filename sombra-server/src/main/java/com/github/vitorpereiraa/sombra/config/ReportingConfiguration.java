@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra.reporting;
+package com.github.vitorpereiraa.sombra.config;
 
 import io.micrometer.registry.otlp.OtlpConfig;
 import java.time.Duration;

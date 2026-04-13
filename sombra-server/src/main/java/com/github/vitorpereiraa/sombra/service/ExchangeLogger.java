@@ -1,10 +1,13 @@
-package com.github.vitorpereiraa.sombra.reporting;
+package com.github.vitorpereiraa.sombra.service;
 
+import com.github.vitorpereiraa.sombra.config.ReportingProperties;
 import com.github.vitorpereiraa.sombra.domain.capture.CapturedExchange;
 import com.github.vitorpereiraa.sombra.domain.capture.TraceId;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.domain.http.HttpBody;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
+import com.github.vitorpereiraa.sombra.domain.reporting.ComparisonReport;
+import com.github.vitorpereiraa.sombra.domain.reporting.ReportedDiscrepancy;
 import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +46,11 @@ public class ExchangeLogger {
                 truncate(candidate.body().map(HttpBody::content).orElse(null)),
                 result.discrepancies().stream().map(ReportedDiscrepancy::from).toList());
 
-        emit(report);
+        try {
+            log.info(jsonMapper.writeValueAsString(report));
+        } catch (Exception e) {
+            log.warn("Failed to serialize exchange log record", e);
+        }
     }
 
     public void logReplayError(CapturedExchange exchange, Duration replayDuration, Throwable error) {
@@ -57,10 +64,6 @@ public class ExchangeLogger {
                 truncate(exchange.response().body().map(HttpBody::content).orElse(null)),
                 error.getClass().getSimpleName() + ": " + error.getMessage());
 
-        emit(report);
-    }
-
-    private void emit(ComparisonReport report) {
         try {
             log.info(jsonMapper.writeValueAsString(report));
         } catch (Exception e) {
