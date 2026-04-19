@@ -6,6 +6,7 @@ import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.domain.http.StatusCode;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import org.springframework.http.HttpHeaders;
@@ -25,7 +26,7 @@ public final class ReplayMapper {
         return springHeaders;
     }
 
-    public static HttpResponse toDomain(ClientHttpResponse response) throws IOException {
+    public static HttpResponse toDomain(ClientHttpResponse response, Duration duration) throws IOException {
         var statusCode = new StatusCode(response.getStatusCode().value());
 
         var headers = response.getHeaders().headerNames().stream()
@@ -36,6 +37,6 @@ public final class ReplayMapper {
         var bodyStr = StreamUtils.copyToString(response.getBody(), StandardCharsets.UTF_8);
         var body = HttpBody.of(bodyStr);
 
-        return new HttpResponse(statusCode, headers, body);
+        return new HttpResponse(statusCode, headers, body, duration);
     }
 }

@@ -1,14 +1,21 @@
 package com.github.vitorpereiraa.sombra.integration;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
+
 import com.github.vitorpereiraa.sombra.SombraApplication;
+import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
+import com.github.vitorpereiraa.sombra.service.ResponseComparisonService;
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 @Import(TestcontainersConfiguration.class)
@@ -18,6 +25,11 @@ public abstract class BaseIT {
     @LocalServerPort
     private int port;
 
+    @MockitoSpyBean
+    private ResponseComparisonService comparisonService;
+
+    private final AtomicReference<ComparisonResult> lastResult = new AtomicReference<>();
+
     protected RestTestClient client;
 
     @BeforeEach
@@ -25,6 +37,18 @@ public abstract class BaseIT {
         client = RestTestClient.bindToServer()
                 .baseUrl("http://localhost:" + port)
                 .build();
+        lastResult.set(null);
+        doAnswer(invocation -> {
+                    var result = (ComparisonResult) invocation.callRealMethod();
+                    lastResult.set(result);
+                    return result;
+                })
+                .when(comparisonService)
+                .compare(any(), any());
+    }
+
+    protected ComparisonResult lastComparisonResult() {
+        return lastResult.get();
     }
 
     @DynamicPropertySource

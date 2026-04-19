@@ -20,7 +20,9 @@ public final class CapturedExchangeEventMapper {
 
     public static CapturedExchangeEvent toEvent(
         ContentCachingRequestWrapper request,
-        ContentCachingResponseWrapper response
+        ContentCachingResponseWrapper response,
+        byte[] responseBody,
+        long durationMs
     ) {
 
         var requestEvent = new HttpRequestEvent(
@@ -33,7 +35,8 @@ public final class CapturedExchangeEventMapper {
         var responseEvent = new HttpResponseEvent(
             response.getStatus(),
             extractResponseHeaders(response),
-            extractBody(response.getContentAsByteArray())
+            extractBody(responseBody),
+            durationMs
         );
 
         return new CapturedExchangeEvent(

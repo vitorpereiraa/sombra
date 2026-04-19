@@ -31,7 +31,6 @@ public class ResponseComparisonService {
     private final JsonComparator jsonComparator;
     private final boolean compareHeaders;
     private final Set<String> ignoredHeaders;
-    private volatile ComparisonResult lastResult;
 
     public ResponseComparisonService(ComparisonProperties properties, JsonMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
@@ -58,13 +57,7 @@ public class ResponseComparisonService {
 
         discrepancies.addAll(compareBody(original, candidate));
 
-        var result = new ComparisonResult(original, candidate, discrepancies);
-        lastResult = result;
-        return result;
-    }
-
-    public ComparisonResult lastResult() {
-        return lastResult;
+        return new ComparisonResult(original, candidate, discrepancies);
     }
 
     List<Discrepancy> compareHeaders(HttpResponse original, HttpResponse candidate) {

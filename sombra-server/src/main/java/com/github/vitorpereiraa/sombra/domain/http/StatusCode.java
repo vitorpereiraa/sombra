@@ -8,4 +8,8 @@ public record StatusCode(int value) {
         checkArgument(value >= 100 && value <= 599,
             "StatusCode must be between 100 and 599, got: %s", value);
     }
+
+    public String statusClass() {
+        return (value / 100) + "xx";
+    }
 }

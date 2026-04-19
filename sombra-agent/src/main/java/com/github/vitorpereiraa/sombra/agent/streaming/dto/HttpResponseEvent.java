@@ -7,5 +7,6 @@ import java.util.Optional;
 public record HttpResponseEvent(
     int statusCode,
     Map<String, List<String>> headers,
-    Optional<String> body
+    Optional<String> body,
+    long durationMs
 ) {}
