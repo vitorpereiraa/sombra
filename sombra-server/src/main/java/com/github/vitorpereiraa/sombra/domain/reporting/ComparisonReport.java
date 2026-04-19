@@ -14,8 +14,6 @@ public sealed interface ComparisonReport {
 
     long originalDurationMs();
 
-    long replayDurationMs();
-
     String originalBody();
 
     record Compared(
@@ -38,7 +36,6 @@ public sealed interface ComparisonReport {
             String path,
             int originalStatus,
             long originalDurationMs,
-            long replayDurationMs,
             String originalBody,
             String error)
             implements ComparisonReport {}

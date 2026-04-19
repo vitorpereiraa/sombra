@@ -5,7 +5,6 @@ import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.service.ReportingService;
 import com.github.vitorpereiraa.sombra.service.CandidateReplayService;
 import com.github.vitorpereiraa.sombra.service.ResponseComparisonService;
-import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -32,33 +31,24 @@ public class CapturedExchangeConsumer {
 
     @KafkaListener(topics = "${sombra.server.topic-name}")
     public void consume(CapturedExchangeEvent event) {
-        var exchange = CapturedExchangeMapper.toDomain(event);
-        log.debug(
-                "Received captured exchange: {} {} -> {}",
-                exchange.request().method(),
-                exchange.request().path().value(),
-                exchange.response().statusCode().value());
+        log.debug("Received exchange: {} {} -> {}",
+                event.request().method(),
+                event.request().path(),
+                event.response().statusCode()
+        );
 
-        long replayStartNs = System.nanoTime();
+        var exchange = CapturedExchangeMapper.toDomain(event);
+
         HttpResponse replayedResponse;
         try {
             replayedResponse = replayService.replay(exchange.request());
         } catch (RestClientException e) {
-            var replayDuration = Duration.ofNanos(System.nanoTime() - replayStartNs);
-            reportingService.reportError(exchange, replayDuration, e);
-            log.error(
-                    "Failed to replay exchange: {} {}",
-                    exchange.request().method(),
-                    exchange.request().path().value(),
-                    e);
+            reportingService.reportError(exchange, e);
             return;
         }
 
-        long comparisonStartNs = System.nanoTime();
         var result = comparisonService.compare(exchange.response(), replayedResponse);
-        var comparisonDuration = Duration.ofNanos(System.nanoTime() - comparisonStartNs);
 
-        reportingService.reportSuccess(
-                exchange, replayedResponse, result, replayedResponse.duration(), comparisonDuration);
+        reportingService.reportSuccess(exchange, result);
     }
 }

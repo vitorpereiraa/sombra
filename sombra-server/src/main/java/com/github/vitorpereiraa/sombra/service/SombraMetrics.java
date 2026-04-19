@@ -1,5 +1,7 @@
 package com.github.vitorpereiraa.sombra.service;
 
+import com.github.vitorpereiraa.sombra.domain.http.HttpMethod;
+import com.github.vitorpereiraa.sombra.domain.http.StatusCode;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
 import org.springframework.stereotype.Component;
@@ -13,12 +15,32 @@ public class SombraMetrics {
         this.registry = registry;
     }
 
-    public void recordProcessed(String outcome, String method, String statusClass) {
+    public void recordOriginalDuration(HttpMethod method, Duration originalDuration, StatusCode originalStatusCode) {
+        registry.timer(
+                "sombra.original.duration",
+                        "method", method.name(),
+                        "status_class", originalStatusCode.statusClass()
+                )
+                .record(originalDuration);
+    }
+
+    public void recordReplayDuration(
+            HttpMethod method, Duration candidateDuration, StatusCode candidateStatusCode, String outcome) {
+        registry.timer(
+                        "sombra.replay.duration",
+                        "method", method.name(),
+                        "status_class", candidateStatusCode.statusClass(),
+                        "outcome", outcome)
+                .record(candidateDuration);
+    }
+
+
+    public void recordProcessed(String outcome, HttpMethod method, StatusCode candidateStatusCode) {
         registry.counter(
                         "sombra.exchange.processed",
                         "outcome", outcome,
-                        "method", method,
-                        "status_class", statusClass)
+                        "method", method.name(),
+                        "status_class", candidateStatusCode.statusClass())
                 .increment();
     }
 
@@ -26,29 +48,8 @@ public class SombraMetrics {
         registry.counter("sombra.discrepancy.count", "type", type, "field_kind", fieldKind).increment();
     }
 
-    public void recordReplayDuration(Duration duration, String method, String statusClass, String outcome) {
-        registry.timer(
-                        "sombra.replay.duration",
-                        "method", method,
-                        "status_class", statusClass,
-                        "outcome", outcome)
-                .record(duration);
-    }
-
-    public void recordReplayErrorDuration(Duration duration, String method) {
-        registry.timer("sombra.replay.duration", "method", method, "outcome", "error").record(duration);
-    }
-
     public void recordReplayError() {
         registry.counter("sombra.replay.errors").increment();
     }
 
-    public void recordComparisonDuration(Duration duration) {
-        registry.timer("sombra.comparison.duration").record(duration);
-    }
-
-    public void recordOriginalDuration(Duration duration, String method, String statusClass) {
-        registry.timer("sombra.original.duration", "method", method, "status_class", statusClass)
-                .record(duration);
-    }
 }

@@ -3,10 +3,7 @@ package com.github.vitorpereiraa.sombra.service;
 import com.github.vitorpereiraa.sombra.config.ReportingProperties;
 import com.github.vitorpereiraa.sombra.domain.capture.CapturedExchange;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
-import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
-import com.github.vitorpereiraa.sombra.domain.http.StatusCode;
 import com.github.vitorpereiraa.sombra.domain.reporting.ReportedDiscrepancy;
-import java.time.Duration;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -24,23 +21,25 @@ public class ReportingService {
         this.loggingEnabled = properties.logging().enabled();
     }
 
-    public void reportSuccess(
-            CapturedExchange exchange,
-            HttpResponse candidate,
-            ComparisonResult result,
-            Duration replayDuration,
-            Duration comparisonDuration) {
+    public void reportSuccess(CapturedExchange exchange, ComparisonResult result) {
+        var method = exchange.request().method();
 
         if (metricsEnabled) {
-            var method = exchange.request().method().name();
-            var originalStatusClass = statusClass(exchange.response().statusCode());
-            var candidateStatusClass = statusClass(candidate.statusCode());
             var outcome = result.matched() ? "match" : "mismatch";
 
-            metrics.recordOriginalDuration(exchange.response().duration(), method, originalStatusClass);
-            metrics.recordReplayDuration(replayDuration, method, candidateStatusClass, outcome);
-            metrics.recordComparisonDuration(comparisonDuration);
-            metrics.recordProcessed(outcome, method, candidateStatusClass);
+            metrics.recordOriginalDuration(
+                    method,
+                    result.originalResponse().duration(),
+                    result.originalResponse().statusCode());
+
+            metrics.recordReplayDuration(
+                    method,
+                    result.candidateResponse().duration(),
+                    result.candidateResponse().statusCode(),
+                    outcome);
+
+            metrics.recordProcessed(outcome, method, result.candidateResponse().statusCode());
+
             for (var discrepancy : result.discrepancies()) {
                 var reported = ReportedDiscrepancy.from(discrepancy);
                 metrics.recordDiscrepancy(reported.type(), reported.fieldKind());
@@ -48,25 +47,21 @@ public class ReportingService {
         }
 
         if (loggingEnabled) {
-            logger.logComparison(exchange, candidate, result, replayDuration);
+            logger.logComparison(exchange, result);
         }
     }
 
-    public void reportError(CapturedExchange exchange, Duration replayDuration, Throwable error) {
+    public void reportError(CapturedExchange exchange, Throwable error) {
         if (metricsEnabled) {
-            var method = exchange.request().method().name();
             metrics.recordOriginalDuration(
-                    exchange.response().duration(), method, statusClass(exchange.response().statusCode()));
+                    exchange.request().method(),
+                    exchange.response().duration(),
+                    exchange.response().statusCode());
             metrics.recordReplayError();
-            metrics.recordReplayErrorDuration(replayDuration, method);
         }
 
         if (loggingEnabled) {
-            logger.logReplayError(exchange, replayDuration, error);
+            logger.logReplayError(exchange, error);
         }
-    }
-
-    private static String statusClass(StatusCode statusCode) {
-        return (statusCode.value() / 100) + "xx";
     }
 }
