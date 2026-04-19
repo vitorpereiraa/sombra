@@ -17,7 +17,7 @@ class ReplayIT extends BaseIT {
                 .exchange()
                 .expectStatus().isOk();
 
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofMillis(500))
                 .untilAsserted(() -> client.get().uri("/echo/count")
                         .exchange()
                         .expectStatus().isOk()

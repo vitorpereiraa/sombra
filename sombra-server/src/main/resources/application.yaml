@@ -24,6 +24,16 @@ sombra:
   server:
     topic-name: ${SOMBRA_TOPIC_NAME}
     candidate-url: ${SOMBRA_CANDIDATE_URL}
+  reporting:
+    metrics:
+      enabled: ${SOMBRA_METRICS_ENABLED:false}
+      otlp-endpoint: ${SOMBRA_OTLP_ENDPOINT:}
+      step: 10s
+      resource-attributes:
+        service.name: sombra-server
+    logging:
+      enabled: true
+      max-value-length: 512
 
 server:
   port: 8080

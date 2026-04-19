@@ -7,6 +7,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -32,20 +33,29 @@ public class CaptureFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        int contentLength = request.getContentLength() > 0 ? request.getContentLength() : 1024;
-        var wrappedRequest = new ContentCachingRequestWrapper(request, contentLength);
+        var wrappedRequest = new ContentCachingRequestWrapper(request, Math.max(request.getContentLength(), 1024));
         var wrappedResponse = new ContentCachingResponseWrapper(response);
 
+        long startNs = System.nanoTime();
         try {
             filterChain.doFilter(wrappedRequest, wrappedResponse);
         } finally {
-            try {
-                var event = CapturedExchangeEventMapper.toEvent(wrappedRequest, wrappedResponse);
-                producer.send(event);
-            } catch (Exception e) {
-                log.error("Failed to capture exchange", e);
-            }
+            byte[] responseBody = wrappedResponse.getContentAsByteArray();
             wrappedResponse.copyBodyToResponse();
+            long durationMs = Duration.ofNanos(System.nanoTime() - startNs).toMillis();
+            capture(wrappedRequest, wrappedResponse, responseBody, durationMs);
+        }
+    }
+
+    private void capture(
+            ContentCachingRequestWrapper request,
+            ContentCachingResponseWrapper response,
+            byte[] responseBody,
+            long durationMs) {
+        try {
+            producer.send(CapturedExchangeEventMapper.toEvent(request, response, responseBody, durationMs));
+        } catch (Exception e) {
+            log.error("Failed to capture exchange", e);
         }
     }
 }

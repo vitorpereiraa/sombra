@@ -30,7 +30,7 @@ class CaptureFilterIT extends BaseIT {
 
         var captor = ArgumentCaptor.forClass(CapturedExchangeEvent.class);
 
-        await().atMost(Duration.ofSeconds(10))
+        await().atMost(Duration.ofMillis(500))
             .untilAsserted(() -> verify(consumer).consume(captor.capture()));
 
         var event = captor.getValue();
