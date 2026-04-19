@@ -5,10 +5,8 @@ import com.github.vitorpereiraa.sombra.domain.capture.CapturedExchange;
 import com.github.vitorpereiraa.sombra.domain.capture.TraceId;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.domain.http.HttpBody;
-import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.domain.reporting.ComparisonReport;
 import com.github.vitorpereiraa.sombra.domain.reporting.ReportedDiscrepancy;
-import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -27,19 +25,15 @@ public class ExchangeLogger {
         this.jsonMapper = jsonMapper;
     }
 
-    public void logComparison(
-            CapturedExchange exchange,
-            HttpResponse candidate,
-            ComparisonResult result,
-            Duration replayDuration) {
-
+    public void logComparison(CapturedExchange exchange, ComparisonResult result) {
+        var candidate = result.candidateResponse();
         var report = new ComparisonReport.Compared(
                 exchange.traceId().map(TraceId::value).orElse(null),
                 exchange.request().method().name(),
                 exchange.request().path().value(),
                 exchange.response().statusCode().value(),
                 exchange.response().duration().toMillis(),
-                replayDuration.toMillis(),
+                candidate.duration().toMillis(),
                 truncate(exchange.response().body().map(HttpBody::content).orElse(null)),
                 candidate.statusCode().value(),
                 result.matched(),
@@ -53,16 +47,16 @@ public class ExchangeLogger {
         }
     }
 
-    public void logReplayError(CapturedExchange exchange, Duration replayDuration, Throwable error) {
+    public void logReplayError(CapturedExchange exchange, Throwable error) {
         var report = new ComparisonReport.ReplayFailed(
                 exchange.traceId().map(TraceId::value).orElse(null),
                 exchange.request().method().name(),
                 exchange.request().path().value(),
                 exchange.response().statusCode().value(),
                 exchange.response().duration().toMillis(),
-                replayDuration.toMillis(),
                 truncate(exchange.response().body().map(HttpBody::content).orElse(null)),
-                error.getClass().getSimpleName() + ": " + error.getMessage());
+                error.getClass().getSimpleName() + ": " + error.getMessage()
+        );
 
         try {
             log.info(jsonMapper.writeValueAsString(report));
