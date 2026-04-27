@@ -45,3 +45,8 @@ management:
     web:
       exposure:
         include: health,info
+  metrics:
+    distribution:
+      percentiles-histogram:
+        "[sombra.original.duration]": true
+        "[sombra.replay.duration]": true
