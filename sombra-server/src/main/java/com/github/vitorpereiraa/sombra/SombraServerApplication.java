@@ -7,10 +7,10 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 @SpringBootApplication
 @EnableConfigurationProperties({SombraServerProperties.class, ComparisonProperties.class, ReportingProperties.class})
-public class SombraApplication {
+public class SombraServerApplication {
 
 	static void main(String[] args) {
-		SpringApplication.run(SombraApplication.class, args);
+		SpringApplication.run(SombraServerApplication.class, args);
 	}
 
 }

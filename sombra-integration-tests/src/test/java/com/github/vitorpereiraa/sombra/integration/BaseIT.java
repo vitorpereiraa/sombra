@@ -3,7 +3,7 @@ package com.github.vitorpereiraa.sombra.integration;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 
-import com.github.vitorpereiraa.sombra.SombraApplication;
+import com.github.vitorpereiraa.sombra.SombraServerApplication;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.service.ResponseComparisonService;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.client.RestTestClient;
 
 @Import(TestcontainersConfiguration.class)
-@SpringBootTest(classes = SombraApplication.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
+@SpringBootTest(classes = SombraServerApplication.class, webEnvironment = SpringBootTest.WebEnvironment.DEFINED_PORT)
 public abstract class BaseIT {
 
     @LocalServerPort

@@ -17,6 +17,7 @@
 		<module>sombra-agent</module>
 		<module>sombra-server</module>
 		<module>sombra-integration-tests</module>
+		<module>sombra-demo</module>
 	</modules>
 
 	<properties>
