@@ -110,7 +110,6 @@ sombra:
   server:
     topic-name: sombra.captured-exchanges
     candidate-url: http://localhost:8083
-  server:
     comparison:
       ignored-fields: ["/timestamp", "/requestId"]  # optional
       ignore-array-order: true                       # optional
