@@ -6,7 +6,6 @@ sombra:
     metrics:
       enabled: true
       otlp-endpoint: http://localhost:9090/api/v1/otlp/v1/metrics
-      step: 10s
     logging:
       enabled: true
       max-value-length: 512

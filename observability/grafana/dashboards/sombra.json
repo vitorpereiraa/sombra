@@ -4,6 +4,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
   "links": [],
+  "refresh": "10s",
   "panels": [
     {
       "collapsed": false,
@@ -27,7 +28,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "textMode": "auto"
@@ -36,7 +37,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(sombra_exchange_processed_total)",
+          "expr": "sum(increase(sombra_exchange_processed_total[$__range]))",
           "legendFormat": "Total"
         }
       ]
@@ -62,7 +63,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "textMode": "auto"
@@ -94,7 +95,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "textMode": "auto"
@@ -103,7 +104,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(sombra_discrepancy_count_total) or vector(0)",
+          "expr": "sum(increase(sombra_discrepancy_count_total[$__range])) or vector(0)",
           "legendFormat": "Discrepancies"
         }
       ]
@@ -125,7 +126,7 @@
       "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
+        "graphMode": "area",
         "justifyMode": "auto",
         "reduceOptions": { "calcs": ["lastNotNull"] },
         "textMode": "auto"
@@ -134,7 +135,7 @@
       "type": "stat",
       "targets": [
         {
-          "expr": "sum(sombra_replay_errors_total) or vector(0)",
+          "expr": "sum(increase(sombra_replay_errors_total[$__range])) or vector(0)",
           "legendFormat": "Errors"
         }
       ]
