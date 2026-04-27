@@ -36,11 +36,11 @@ sombra:
       max-value-length: 512
 
 server:
-  port: 8080
+  port: 9090
 
 management:
   server:
-    port: 8081
+    port: 9091
   endpoints:
     web:
       exposure:

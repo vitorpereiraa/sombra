@@ -2,6 +2,10 @@ sombra:
   server:
     topic-name: sombra.captured-exchanges
     candidate-url: http://localhost:8083
+  reporting:
+    logging:
+      enabled: true
+      max-value-length: 512
 
 spring:
   docker:
