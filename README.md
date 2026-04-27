@@ -92,6 +92,29 @@ curl http://localhost:8082/api/users/999  # Mismatch — 404 vs 200 status code
 
 Watch the sombra-server terminal for structured comparison logs showing `"match":true/false` with field-level discrepancy details.
 
+### Load Testing with k6
+
+With the demo stack running, use the k6 script to generate sustained load:
+
+```bash
+k6 run k6/load-test.js
+```
+
+The script cycles through all three user IDs (1, 2, 999) at a constant request rate. Override defaults via environment variables or by editing the top of the script:
+
+```bash
+# Custom target URL and run duration
+k6 run -e BASE_URL=http://localhost:8082 k6/load-test.js
+```
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `BASE_URL` | `http://localhost:8082` | Target service URL (env var) |
+| `USER_IDS` | `[1, 2, 999]` | User IDs to cycle through (edit script) |
+| `rate` | `5` | Requests per second (edit script) |
+| `duration` | `30s` | Test duration (edit script) |
+| `preAllocatedVUs` | `10` | Virtual user pool size (edit script) |
+
 ## Configuration
 
 ### Agent (added to the original service)
