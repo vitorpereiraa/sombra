@@ -1,6 +1,7 @@
 package com.github.vitorpereiraa.sombra.config;
 
 import io.micrometer.registry.otlp.OtlpConfig;
+import io.micrometer.registry.otlp.OtlpMeterRegistry;
 import java.time.Duration;
 import java.util.Map;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -35,5 +36,11 @@ public class ReportingConfiguration {
                 return null;
             }
         };
+    }
+
+    @Bean
+    @ConditionalOnProperty(prefix = "sombra.reporting.metrics", name = "enabled", havingValue = "true")
+    public OtlpMeterRegistry otlpMeterRegistry(OtlpConfig otlpConfig) {
+        return OtlpMeterRegistry.builder(otlpConfig).build();
     }
 }
