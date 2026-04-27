@@ -3,6 +3,9 @@ sombra:
     topic-name: sombra.captured-exchanges
     candidate-url: http://localhost:8083
   reporting:
+    metrics:
+      enabled: true
+      otlp-endpoint: http://localhost:9090/api/v1/otlp/v1/metrics
     logging:
       enabled: true
       max-value-length: 512
