@@ -5,9 +5,6 @@ import com.github.vitorpereiraa.sombra.agent.streaming.dto.HttpRequestEvent;
 import com.github.vitorpereiraa.sombra.agent.streaming.dto.HttpResponseEvent;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.web.util.ContentCachingRequestWrapper;
-import org.springframework.web.util.ContentCachingResponseWrapper;
-
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Collections;
@@ -15,36 +12,28 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import org.springframework.web.util.ContentCachingRequestWrapper;
+import org.springframework.web.util.ContentCachingResponseWrapper;
 
 public final class CapturedExchangeEventMapper {
 
     public static CapturedExchangeEvent toEvent(
-        ContentCachingRequestWrapper request,
-        ContentCachingResponseWrapper response,
-        byte[] responseBody,
-        long durationMs
-    ) {
+            ContentCachingRequestWrapper request,
+            ContentCachingResponseWrapper response,
+            byte[] responseBody,
+            long durationNs) {
 
         var requestEvent = new HttpRequestEvent(
-            request.getMethod(),
-            buildPath(request),
-            extractRequestHeaders(request),
-            extractBody(request.getContentAsByteArray())
-        );
+                request.getMethod(),
+                buildPath(request),
+                extractRequestHeaders(request),
+                extractBody(request.getContentAsByteArray()));
 
         var responseEvent = new HttpResponseEvent(
-            response.getStatus(),
-            extractResponseHeaders(response),
-            extractBody(responseBody),
-            durationMs
-        );
+                response.getStatus(), extractResponseHeaders(response), extractBody(responseBody), durationNs);
 
         return new CapturedExchangeEvent(
-            requestEvent,
-            responseEvent,
-            Instant.now(),
-            Optional.empty()
-        );
+                requestEvent, responseEvent, Instant.now(), Optional.of(TraceIdExtractor.extract(request)));
     }
 
     private static String buildPath(HttpServletRequest request) {

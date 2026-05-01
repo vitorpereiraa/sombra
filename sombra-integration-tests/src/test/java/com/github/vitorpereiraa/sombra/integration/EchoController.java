@@ -12,10 +12,17 @@ import org.springframework.web.bind.annotation.RestController;
 class EchoController {
 
     private final AtomicInteger callCount = new AtomicInteger();
+    private final AtomicInteger replayCallCount = new AtomicInteger();
 
     @PostMapping("/echo")
     ResponseEntity<String> echo(@RequestBody String body) {
         callCount.incrementAndGet();
+        return ResponseEntity.ok(body);
+    }
+
+    @PostMapping("/echo/replay")
+    ResponseEntity<String> echoReplay(@RequestBody String body) {
+        replayCallCount.incrementAndGet();
         return ResponseEntity.ok(body);
     }
 
@@ -55,5 +62,10 @@ class EchoController {
     @GetMapping("/echo/count")
     ResponseEntity<Integer> count() {
         return ResponseEntity.ok(callCount.get());
+    }
+
+    @GetMapping("/echo/replay/count")
+    ResponseEntity<Integer> replayCount() {
+        return ResponseEntity.ok(replayCallCount.get());
     }
 }

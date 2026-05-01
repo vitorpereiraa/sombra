@@ -7,7 +7,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.time.Duration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -42,8 +41,8 @@ public class CaptureFilter extends OncePerRequestFilter {
         } finally {
             byte[] responseBody = wrappedResponse.getContentAsByteArray();
             wrappedResponse.copyBodyToResponse();
-            long durationMs = Duration.ofNanos(System.nanoTime() - startNs).toMillis();
-            capture(wrappedRequest, wrappedResponse, responseBody, durationMs);
+            long durationNs = System.nanoTime() - startNs;
+            capture(wrappedRequest, wrappedResponse, responseBody, durationNs);
         }
     }
 
@@ -51,9 +50,9 @@ public class CaptureFilter extends OncePerRequestFilter {
             ContentCachingRequestWrapper request,
             ContentCachingResponseWrapper response,
             byte[] responseBody,
-            long durationMs) {
+            long durationNs) {
         try {
-            producer.send(CapturedExchangeEventMapper.toEvent(request, response, responseBody, durationMs));
+            producer.send(CapturedExchangeEventMapper.toEvent(request, response, responseBody, durationNs));
         } catch (Exception e) {
             log.error("Failed to capture exchange", e);
         }
