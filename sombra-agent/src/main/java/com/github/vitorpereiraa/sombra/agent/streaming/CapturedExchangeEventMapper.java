@@ -15,14 +15,18 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 public final class CapturedExchangeEventMapper {
+
+    private static final String TRACEPARENT_HEADER = "traceparent";
+    private static final String X_REQUEST_ID_HEADER = "X-Request-Id";
 
     public static CapturedExchangeEvent toEvent(
         ContentCachingRequestWrapper request,
         ContentCachingResponseWrapper response,
         byte[] responseBody,
-        long durationMs
+        long durationNs
     ) {
 
         var requestEvent = new HttpRequestEvent(
@@ -36,15 +40,30 @@ public final class CapturedExchangeEventMapper {
             response.getStatus(),
             extractResponseHeaders(response),
             extractBody(responseBody),
-            durationMs
+            durationNs
         );
 
         return new CapturedExchangeEvent(
             requestEvent,
             responseEvent,
             Instant.now(),
-            Optional.empty()
+            Optional.of(extractTraceId(request))
         );
+    }
+
+    private static String extractTraceId(HttpServletRequest request) {
+        var traceparent = request.getHeader(TRACEPARENT_HEADER);
+        if (traceparent != null) {
+            var parts = traceparent.split("-");
+            if (parts.length >= 2 && parts[1].length() == 32) {
+                return parts[1];
+            }
+        }
+        var requestId = request.getHeader(X_REQUEST_ID_HEADER);
+        if (requestId != null && !requestId.isBlank()) {
+            return requestId;
+        }
+        return UUID.randomUUID().toString();
     }
 
     private static String buildPath(HttpServletRequest request) {
