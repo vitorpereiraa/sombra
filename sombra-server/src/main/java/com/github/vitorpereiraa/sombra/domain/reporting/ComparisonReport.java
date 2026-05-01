@@ -12,7 +12,7 @@ public sealed interface ComparisonReport {
 
     int originalStatus();
 
-    long originalDurationMs();
+    long originalDurationNs();
 
     String originalBody();
 
@@ -21,8 +21,8 @@ public sealed interface ComparisonReport {
             String method,
             String path,
             int originalStatus,
-            long originalDurationMs,
-            long replayDurationMs,
+            long originalDurationNs,
+            long replayDurationNs,
             String originalBody,
             int candidateStatus,
             boolean match,
@@ -35,7 +35,7 @@ public sealed interface ComparisonReport {
             String method,
             String path,
             int originalStatus,
-            long originalDurationMs,
+            long originalDurationNs,
             String originalBody,
             String error)
             implements ComparisonReport {}

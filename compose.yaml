@@ -8,7 +8,7 @@ services:
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:9092
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
@@ -25,9 +25,9 @@ services:
       - "9090:9090"
     command:
       - --config.file=/etc/prometheus/prometheus.yml
-      - --web.enable-otlp-receiver
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
 
   grafana:
     image: grafana/grafana:latest
@@ -40,3 +40,81 @@ services:
     volumes:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - ./observability/loki/local-config.yaml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    command:
+      - run
+      - --server.http.listen-addr=0.0.0.0:12345
+      - /etc/alloy/config.alloy
+    volumes:
+      - ./observability/alloy/config.alloy:/etc/alloy/config.alloy
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - loki
+
+  sombra-server:
+    build:
+      context: .
+      dockerfile: sombra-server/Dockerfile
+    container_name: sombra-server
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: broker:9092
+      SOMBRA_TOPIC_NAME: sombra.captured-exchanges
+      SOMBRA_CANDIDATE_URL: http://demo-candidate:8083
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
+    labels:
+      logging: sombra
+    depends_on:
+      broker:
+        condition: service_started
+      loki:
+        condition: service_started
+
+  demo-original:
+    build:
+      context: .
+      dockerfile: sombra-demo/demo-original/Dockerfile
+    container_name: demo-original
+    ports:
+      - "8082:8082"
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
+    labels:
+      logging: sombra
+    depends_on:
+      broker:
+        condition: service_started
+
+  demo-candidate:
+    build:
+      context: .
+      dockerfile: sombra-demo/demo-candidate/Dockerfile
+    container_name: demo-candidate
+    ports:
+      - "8083:8083"
+    environment:
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
+    labels:
+      logging: sombra
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:

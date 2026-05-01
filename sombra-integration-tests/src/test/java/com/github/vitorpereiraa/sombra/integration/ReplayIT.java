@@ -11,14 +11,14 @@ class ReplayIT extends BaseIT {
 
     @Test
     void shouldReplayRequestToCandidate() {
-        client.post().uri("/echo")
+        client.post().uri("/echo/replay")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body("{\"test\":\"replay\"}")
                 .exchange()
                 .expectStatus().isOk();
 
         await().atMost(Duration.ofMillis(500))
-                .untilAsserted(() -> client.get().uri("/echo/count")
+                .untilAsserted(() -> client.get().uri("/echo/replay/count")
                         .exchange()
                         .expectStatus().isOk()
                         .expectBody(Integer.class)
