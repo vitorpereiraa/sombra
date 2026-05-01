@@ -55,6 +55,7 @@ public abstract class BaseIT {
     static void configureSombra(DynamicPropertyRegistry registry) {
         int port = findFreePort();
         registry.add("server.port", () -> String.valueOf(port));
+        registry.add("management.server.port", () -> String.valueOf(findFreePort()));
         registry.add("sombra.agent.enabled", () -> true);
         registry.add("sombra.agent.topic-name", () -> "sombra.captured-exchanges");
         registry.add("sombra.server.topic-name", () -> "sombra.captured-exchanges");

@@ -70,6 +70,19 @@ public class ExchangeLogger {
                 .log(message);
     }
 
+    private List<Map<String, Object>> toLogShape(List<ReportedDiscrepancy> discrepancies) {
+        return discrepancies.stream().map(d -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("type", d.type());
+            m.put("field_kind", d.fieldKind());
+            d.name().ifPresent(n -> m.put("name", n));
+            d.path().ifPresent(p -> m.put("path", p));
+            d.originalValue().map(this::truncate).ifPresent(v -> m.put("original_value", v));
+            d.candidateValue().map(this::truncate).ifPresent(v -> m.put("candidate_value", v));
+            return m;
+        }).toList();
+    }
+
     public void logReplayError(CapturedExchange exchange, Throwable error) {
         var report = new ComparisonReport.ReplayFailed(
                 exchange.traceId().map(TraceId::value).orElse(null),
@@ -88,19 +101,9 @@ public class ExchangeLogger {
                 .addKeyValue("original_response_status", report.originalStatus())
                 .addKeyValue("original_response_duration_ns", report.originalDurationNs())
                 .addKeyValue("original_response_body", report.originalBody())
+                .addKeyValue("error_type", error.getClass().getSimpleName())
                 .addKeyValue("error", report.error())
                 .log("replay failed {} {}: {}", report.method(), report.path(), report.error());
-    }
-
-    private static List<Map<String, Object>> toLogShape(List<ReportedDiscrepancy> discrepancies) {
-        return discrepancies.stream().map(d -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("type", d.type());
-            m.put("field_kind", d.fieldKind());
-            d.name().ifPresent(n -> m.put("name", n));
-            d.path().ifPresent(p -> m.put("path", p));
-            return m;
-        }).toList();
     }
 
     private static String summarize(List<ReportedDiscrepancy> discrepancies) {

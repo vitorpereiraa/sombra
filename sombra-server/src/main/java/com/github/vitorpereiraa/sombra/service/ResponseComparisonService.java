@@ -48,7 +48,10 @@ public class ResponseComparisonService {
         var discrepancies = new ArrayList<Discrepancy>();
 
         if (original.statusCode().value() != candidate.statusCode().value()) {
-            discrepancies.add(new Discrepancy.ValueMismatch(new ResponseField.StatusCode()));
+            discrepancies.add(new Discrepancy.ValueMismatch(
+                    new ResponseField.StatusCode(),
+                    String.valueOf(original.statusCode().value()),
+                    String.valueOf(candidate.statusCode().value())));
         }
 
         if (compareHeaders) {
@@ -77,11 +80,16 @@ public class ResponseComparisonService {
             var candValues = candHeaders.get(name);
 
             if (origValues == null) {
-                discrepancies.add(new Discrepancy.FieldAdded(new ResponseField.Header(name)));
+                discrepancies.add(new Discrepancy.FieldAdded(
+                        new ResponseField.Header(name), String.join(", ", candValues)));
             } else if (candValues == null) {
-                discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Header(name)));
+                discrepancies.add(new Discrepancy.FieldRemoved(
+                        new ResponseField.Header(name), String.join(", ", origValues)));
             } else if (!origValues.equals(candValues)) {
-                discrepancies.add(new Discrepancy.ValueMismatch(new ResponseField.Header(name)));
+                discrepancies.add(new Discrepancy.ValueMismatch(
+                        new ResponseField.Header(name),
+                        String.join(", ", origValues),
+                        String.join(", ", candValues)));
             }
         }
         return discrepancies;
@@ -107,11 +115,13 @@ public class ResponseComparisonService {
         }
 
         if (originalBody.isEmpty()) {
-            return List.of(new Discrepancy.FieldAdded(new ResponseField.Body()));
+            return List.of(new Discrepancy.FieldAdded(
+                    new ResponseField.Body(), candidateBody.get().content()));
         }
 
         if (candidateBody.isEmpty()) {
-            return List.of(new Discrepancy.FieldRemoved(new ResponseField.Body()));
+            return List.of(new Discrepancy.FieldRemoved(
+                    new ResponseField.Body(), originalBody.get().content()));
         }
 
         var originalContent = originalBody.get().content();
@@ -126,9 +136,11 @@ public class ResponseComparisonService {
         if (originalJson.isEmpty() && candidateJson.isEmpty()) {
             return originalContent.equals(candidateContent)
                     ? List.of()
-                    : List.of(new Discrepancy.ValueMismatch(new ResponseField.Body()));
+                    : List.of(new Discrepancy.ValueMismatch(
+                            new ResponseField.Body(), originalContent, candidateContent));
         }
-        return List.of(new Discrepancy.TypeMismatch(new ResponseField.Body()));
+        return List.of(new Discrepancy.TypeMismatch(
+                new ResponseField.Body(), originalContent, candidateContent));
     }
 
     Optional<JsonValue> parseJson(String content) {

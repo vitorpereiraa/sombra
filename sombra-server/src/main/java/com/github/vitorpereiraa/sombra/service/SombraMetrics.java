@@ -48,8 +48,8 @@ public class SombraMetrics {
         registry.counter("sombra.discrepancy.count", "type", type, "field_kind", fieldKind).increment();
     }
 
-    public void recordReplayError() {
-        registry.counter("sombra.replay.errors").increment();
+    public void recordReplayError(String errorType) {
+        registry.counter("sombra.replay.errors", "error_type", errorType).increment();
     }
 
 }

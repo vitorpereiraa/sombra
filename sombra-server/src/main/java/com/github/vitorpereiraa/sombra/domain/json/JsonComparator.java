@@ -27,29 +27,35 @@ public class JsonComparator {
             case JsonObject orig when candidate instanceof JsonObject cand -> compareObjects(orig, cand, path);
             case JsonArray orig when candidate instanceof JsonArray cand -> compareArrays(orig, cand, path);
             case JsonPrimitive orig when candidate instanceof JsonPrimitive cand -> comparePrimitives(orig, cand, path);
-            default -> typeMismatch(path);
+            default -> typeMismatch(path, original, candidate);
         };
     }
 
     static List<Discrepancy> comparePrimitives(JsonPrimitive original, JsonPrimitive candidate, FieldPath path) {
         return switch (original) {
             case JsonString orig when candidate instanceof JsonString cand ->
-                orig.value().equals(cand.value()) ? List.of() : valueMismatch(path);
+                orig.value().equals(cand.value()) ? List.of() : valueMismatch(path, orig, cand);
             case JsonNumber orig when candidate instanceof JsonNumber cand ->
-                orig.value().compareTo(cand.value()) == 0 ? List.of() : valueMismatch(path);
+                orig.value().compareTo(cand.value()) == 0 ? List.of() : valueMismatch(path, orig, cand);
             case JsonBoolean orig when candidate instanceof JsonBoolean cand ->
-                orig.value() == cand.value() ? List.of() : valueMismatch(path);
+                orig.value() == cand.value() ? List.of() : valueMismatch(path, orig, cand);
             case JsonNull _ when candidate instanceof JsonNull _ -> List.of();
-            default -> typeMismatch(path);
+            default -> typeMismatch(path, original, candidate);
         };
     }
 
-    static List<Discrepancy> valueMismatch(FieldPath path) {
-        return List.of(new Discrepancy.ValueMismatch(new ResponseField.Body(path)));
+    static List<Discrepancy> valueMismatch(FieldPath path, JsonValue original, JsonValue candidate) {
+        return List.of(new Discrepancy.ValueMismatch(
+                new ResponseField.Body(path),
+                JsonValueRenderer.render(original),
+                JsonValueRenderer.render(candidate)));
     }
 
-    static List<Discrepancy> typeMismatch(FieldPath path) {
-        return List.of(new Discrepancy.TypeMismatch(new ResponseField.Body(path)));
+    static List<Discrepancy> typeMismatch(FieldPath path, JsonValue original, JsonValue candidate) {
+        return List.of(new Discrepancy.TypeMismatch(
+                new ResponseField.Body(path),
+                JsonValueRenderer.render(original),
+                JsonValueRenderer.render(candidate)));
     }
 
     List<Discrepancy> compareObjects(JsonObject original, JsonObject candidate, FieldPath path) {
@@ -67,9 +73,11 @@ public class JsonComparator {
             var candValue = candidate.fields().get(key);
 
             if (origValue == null) {
-                discrepancies.add(new Discrepancy.FieldAdded(new ResponseField.Body(fieldPath)));
+                discrepancies.add(new Discrepancy.FieldAdded(
+                        new ResponseField.Body(fieldPath), JsonValueRenderer.render(candValue)));
             } else if (candValue == null) {
-                discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Body(fieldPath)));
+                discrepancies.add(new Discrepancy.FieldRemoved(
+                        new ResponseField.Body(fieldPath), JsonValueRenderer.render(origValue)));
             } else {
                 discrepancies.addAll(compare(origValue, candValue, fieldPath));
             }
@@ -94,9 +102,11 @@ public class JsonComparator {
             }
 
             if (i >= origElements.size()) {
-                discrepancies.add(new Discrepancy.FieldAdded(new ResponseField.Body(elementPath)));
+                discrepancies.add(new Discrepancy.FieldAdded(
+                        new ResponseField.Body(elementPath), JsonValueRenderer.render(candElements.get(i))));
             } else if (i >= candElements.size()) {
-                discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Body(elementPath)));
+                discrepancies.add(new Discrepancy.FieldRemoved(
+                        new ResponseField.Body(elementPath), JsonValueRenderer.render(origElements.get(i))));
             } else {
                 discrepancies.addAll(compare(origElements.get(i), candElements.get(i), elementPath));
             }
@@ -109,11 +119,13 @@ public class JsonComparator {
         var discrepancies = new ArrayList<Discrepancy>();
         for (var orig : original.elements()) {
             if (!remaining.remove(orig)) {
-                discrepancies.add(new Discrepancy.FieldRemoved(new ResponseField.Body(path)));
+                discrepancies.add(new Discrepancy.FieldRemoved(
+                        new ResponseField.Body(path), JsonValueRenderer.render(orig)));
             }
         }
-        for (int i = 0; i < remaining.size(); i++) {
-            discrepancies.add(new Discrepancy.FieldAdded(new ResponseField.Body(path)));
+        for (var added : remaining) {
+            discrepancies.add(new Discrepancy.FieldAdded(
+                    new ResponseField.Body(path), JsonValueRenderer.render(added)));
         }
         return discrepancies;
     }

@@ -46,7 +46,7 @@ public class ReportingService {
                 exchange.request().method(),
                 exchange.response().duration(),
                 exchange.response().statusCode());
-        metrics.recordReplayError();
+        metrics.recordReplayError(error.getClass().getSimpleName());
 
         logger.logReplayError(exchange, error);
     }
