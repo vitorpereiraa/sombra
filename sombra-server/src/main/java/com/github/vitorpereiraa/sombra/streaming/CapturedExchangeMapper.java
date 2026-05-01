@@ -29,7 +29,7 @@ public final class CapturedExchangeMapper {
             new StatusCode(event.response().statusCode()),
             toHeaders(event.response().headers()),
             event.response().body().flatMap(HttpBody::of),
-            Duration.ofMillis(event.response().durationMs())
+            Duration.ofNanos(event.response().durationNs())
         );
 
         return new CapturedExchange(

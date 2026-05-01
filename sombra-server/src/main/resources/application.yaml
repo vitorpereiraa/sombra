@@ -14,8 +14,11 @@ spring:
     consumer:
       auto-offset-reset: earliest
       group-id: sombra-server
-      value-deserializer: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+      key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
       properties:
+        spring.deserializer.key.delegate.class: org.apache.kafka.common.serialization.StringDeserializer
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JacksonJsonDeserializer
         spring.json.trusted.packages: com.github.vitorpereiraa.sombra.agent.streaming.dto
 
 sombra:
@@ -25,12 +28,6 @@ sombra:
     topic-name: ${SOMBRA_TOPIC_NAME}
     candidate-url: ${SOMBRA_CANDIDATE_URL}
   reporting:
-    metrics:
-      enabled: ${SOMBRA_METRICS_ENABLED:false}
-      otlp-endpoint: ${SOMBRA_OTLP_ENDPOINT:}
-      step: 10s
-      resource-attributes:
-        service.name: sombra-server
     logging:
       enabled: true
       max-value-length: 512
@@ -44,7 +41,7 @@ management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,prometheus
   metrics:
     distribution:
       percentiles-histogram:
