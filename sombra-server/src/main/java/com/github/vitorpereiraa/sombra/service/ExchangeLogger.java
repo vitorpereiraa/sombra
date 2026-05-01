@@ -41,7 +41,7 @@ public class ExchangeLogger {
                 truncate(candidate.body().map(HttpBody::content).orElse(null)),
                 result.discrepancies().stream().map(ReportedDiscrepancy::from).toList());
 
-        var summary = summary(report.discrepancies());
+        var summary = summarize(report.discrepancies());
         var message = report.match()
                 ? "match %s %s -> %d".formatted(report.method(), report.path(), report.candidateStatus())
                 : "mismatch %s %s original=%d candidate=%d [%s]"
@@ -103,12 +103,12 @@ public class ExchangeLogger {
         }).toList();
     }
 
-    private static String summary(List<ReportedDiscrepancy> discrepancies) {
+    private static String summarize(List<ReportedDiscrepancy> discrepancies) {
         return discrepancies.stream().map(ExchangeLogger::summarize).collect(Collectors.joining(","));
     }
 
     private static String summarize(ReportedDiscrepancy d) {
-        var qualifier = d.name().or(() -> d.path()).map(":"::concat).orElse("");
+        var qualifier = d.name().or(d::path).map(s -> ":" + s).orElse("");
         return d.type() + ":" + d.fieldKind() + qualifier;
     }
 

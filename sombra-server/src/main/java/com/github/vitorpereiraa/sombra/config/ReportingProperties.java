@@ -11,7 +11,7 @@ public record ReportingProperties(Logging logging) {
         checkArgument(logging != null, "sombra.reporting.logging must be configured");
     }
 
-    public record Logging(boolean enabled, int maxValueLength) {
+    public record Logging(int maxValueLength) {
 
         public Logging {
             checkArgument(

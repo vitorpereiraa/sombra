@@ -27,6 +27,7 @@ services:
       - --config.file=/etc/prometheus/prometheus.yml
     volumes:
       - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
 
   grafana:
     image: grafana/grafana:latest
@@ -39,6 +40,7 @@ services:
     volumes:
       - ./observability/grafana/provisioning:/etc/grafana/provisioning
       - ./observability/grafana/dashboards:/var/lib/grafana/dashboards
+      - grafana-data:/var/lib/grafana
 
   loki:
     image: grafana/loki:latest
@@ -48,6 +50,7 @@ services:
     command: -config.file=/etc/loki/local-config.yaml
     volumes:
       - ./observability/loki/local-config.yaml:/etc/loki/local-config.yaml
+      - loki-data:/loki
 
   alloy:
     image: grafana/alloy:latest
@@ -92,6 +95,9 @@ services:
       - "8082:8082"
     environment:
       SPRING_KAFKA_BOOTSTRAP_SERVERS: broker:9092
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
+    labels:
+      logging: sombra
     depends_on:
       broker:
         condition: service_started
@@ -103,3 +109,12 @@ services:
     container_name: demo-candidate
     ports:
       - "8083:8083"
+    environment:
+      LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
+    labels:
+      logging: sombra
+
+volumes:
+  prometheus-data:
+  grafana-data:
+  loki-data:
