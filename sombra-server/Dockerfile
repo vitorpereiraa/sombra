@@ -15,8 +15,11 @@ RUN ./mvnw -pl sombra-server -am package -DskipTests -B
 
 FROM eclipse-temurin:26-jre AS runtime
 WORKDIR /app
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 COPY --from=build /build/sombra-server/target/sombra-server-*-exec.jar /app/sombra-server.jar
 EXPOSE 8080 8081
 HEALTHCHECK --interval=10s --timeout=3s --retries=10 \
-  CMD wget -qO- http://localhost:8081/actuator/health | grep -q '"UP"' || exit 1
+  CMD curl -fsS http://localhost:8081/actuator/health | grep -q '"UP"' || exit 1
 ENTRYPOINT ["java", "-jar", "/app/sombra-server.jar"]

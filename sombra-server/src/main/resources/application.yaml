@@ -29,7 +29,6 @@ sombra:
     candidate-url: ${SOMBRA_CANDIDATE_URL}
   reporting:
     logging:
-      enabled: true
       max-value-length: 512
 
 server:

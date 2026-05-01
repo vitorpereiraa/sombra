@@ -10,14 +10,14 @@ import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 
 class ReportingIT extends BaseIT {
 
@@ -26,13 +26,6 @@ class ReportingIT extends BaseIT {
 
     private ListAppender<ILoggingEvent> appender;
     private Logger reportingLogger;
-
-    @DynamicPropertySource
-    static void enableMetrics(DynamicPropertyRegistry registry) {
-        registry.add("sombra.reporting.metrics.enabled", () -> "true");
-        registry.add("sombra.reporting.metrics.otlp-endpoint", () -> "http://localhost:4318/v1/metrics");
-        registry.add("sombra.reporting.metrics.step", () -> "1h");
-    }
 
     @BeforeEach
     void attachAppender() {
@@ -73,9 +66,10 @@ class ReportingIT extends BaseIT {
                     assertThat(count).isGreaterThanOrEqualTo(1);
                 });
 
-        assertThat(appender.list)
-                .anyMatch(e -> e.getFormattedMessage().contains("\"match\":true")
-                        && e.getFormattedMessage().contains("\"path\":\"/echo\""));
+        assertThat(appender.list).anyMatch(e -> {
+            var kvs = keyValues(e);
+            return Boolean.TRUE.equals(kvs.get("matched")) && "/echo".equals(kvs.get("request_path"));
+        });
     }
 
     @Test
@@ -105,14 +99,23 @@ class ReportingIT extends BaseIT {
                     assertThat(discrepancy).isGreaterThanOrEqualTo(1);
                 });
 
-        assertThat(appender.list)
-                .anyMatch(e -> {
-                    var msg = e.getFormattedMessage();
-                    return msg.contains("\"match\":false")
-                            && msg.contains("\"path\":\"/echo/different\"")
-                            && msg.contains("\"originalBody\":\"{\\\"name\\\":\\\"original\\\",\\\"value\\\":1}\"")
-                            && msg.contains("\"candidateBody\":\"{\\\"name\\\":\\\"changed\\\",\\\"value\\\":42}\"")
-                            && msg.contains("ValueMismatch");
-                });
+        assertThat(appender.list).anyMatch(e -> {
+            var kvs = keyValues(e);
+            return Boolean.FALSE.equals(kvs.get("matched"))
+                    && "/echo/different".equals(kvs.get("request_path"))
+                    && "{\"name\":\"original\",\"value\":1}".equals(kvs.get("original_response_body"))
+                    && "{\"name\":\"changed\",\"value\":42}".equals(kvs.get("candidate_response_body"))
+                    && String.valueOf(kvs.get("discrepancy_summary")).contains("ValueMismatch");
+        });
+    }
+
+    private static Map<String, Object> keyValues(ILoggingEvent event) {
+        var pairs = event.getKeyValuePairs();
+        if (pairs == null) {
+            return Map.of();
+        }
+        Map<String, Object> map = new LinkedHashMap<>();
+        pairs.forEach(p -> map.put(p.key, p.value));
+        return map;
     }
 }
