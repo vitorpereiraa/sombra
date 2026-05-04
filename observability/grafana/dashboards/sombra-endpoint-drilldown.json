@@ -1,0 +1,221 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "refresh": "30s",
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "title": "Top Offenders",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 5 },
+              { "color": "red", "value": 20 }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+              { "id": "displayName", "value": "Mismatches" }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 1 },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": { "show": false }
+      },
+      "title": "Top Mismatching Endpoints",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (request_method, request_path) (count_over_time({service=\"sombra-server\"} | json | event=\"shadow.comparison\" | matched=\"false\" | request_method=~\"$request_method\" [$__range])))",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Value" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "color-background" } },
+              { "id": "displayName", "value": "Errors" }
+            ]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 1 },
+      "options": {
+        "showHeader": true,
+        "cellHeight": "sm",
+        "footer": { "show": false }
+      },
+      "title": "Replay Errors by Endpoint",
+      "type": "table",
+      "targets": [
+        {
+          "expr": "topk(10, sum by (request_method, request_path, error_type) (count_over_time({service=\"sombra-server\"} | json | event=\"shadow.replayFailed\" | request_method=~\"$request_method\" [$__range])))",
+          "instant": true,
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 9 },
+      "title": "Log Streams",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "gridPos": { "h": 12, "w": 24, "x": 0, "y": 10 },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "title": "Mismatch Stream",
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{service=\"sombra-server\"} | json | event=\"shadow.comparison\" | matched=\"false\" | request_method=~\"$request_method\"",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 22 },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Descending"
+      },
+      "title": "Replay Error Stream",
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{service=\"sombra-server\"} | json | event=\"shadow.replayFailed\" | request_method=~\"$request_method\"",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 32 },
+      "title": "Single Exchange (set $trace_id to drill in)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "description": "All Sombra log lines for the trace_id set in the variable above. Empty by default.",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 33 },
+      "options": {
+        "showTime": true,
+        "showLabels": false,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": true,
+        "enableLogDetails": true,
+        "dedupStrategy": "none",
+        "sortOrder": "Ascending"
+      },
+      "title": "Trace Detail",
+      "type": "logs",
+      "targets": [
+        {
+          "expr": "{service=\"sombra-server\"} | json | trace_id=\"$trace_id\" | trace_id != \"\"",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "schemaVersion": 39,
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "Loki", "value": "Loki" },
+        "hide": 2,
+        "name": "DS_LOKI",
+        "type": "datasource",
+        "query": "loki"
+      },
+      {
+        "current": { "selected": true, "text": ".+", "value": ".+" },
+        "name": "request_method",
+        "label": "Method",
+        "type": "custom",
+        "query": ".+,GET,POST,PUT,PATCH,DELETE",
+        "options": [
+          { "selected": true, "text": ".+", "value": ".+" },
+          { "selected": false, "text": "GET", "value": "GET" },
+          { "selected": false, "text": "POST", "value": "POST" },
+          { "selected": false, "text": "PUT", "value": "PUT" },
+          { "selected": false, "text": "PATCH", "value": "PATCH" },
+          { "selected": false, "text": "DELETE", "value": "DELETE" }
+        ]
+      },
+      {
+        "current": { "selected": false, "text": "", "value": "" },
+        "name": "trace_id",
+        "label": "Trace ID",
+        "type": "textbox",
+        "query": ""
+      }
+    ]
+  },
+  "time": { "from": "now-1h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Sombra — Endpoint Drilldown",
+  "uid": "sombra-endpoint-drilldown",
+  "version": 1
+}

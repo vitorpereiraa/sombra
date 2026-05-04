@@ -27,9 +27,6 @@ sombra:
   server:
     topic-name: ${SOMBRA_TOPIC_NAME}
     candidate-url: ${SOMBRA_CANDIDATE_URL}
-  reporting:
-    logging:
-      max-value-length: 512
 
 server:
   port: 8080
