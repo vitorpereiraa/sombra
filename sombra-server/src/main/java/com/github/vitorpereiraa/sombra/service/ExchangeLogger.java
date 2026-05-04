@@ -1,6 +1,5 @@
 package com.github.vitorpereiraa.sombra.service;
 
-import com.github.vitorpereiraa.sombra.config.ReportingProperties;
 import com.github.vitorpereiraa.sombra.domain.capture.CapturedExchange;
 import com.github.vitorpereiraa.sombra.domain.capture.TraceId;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
@@ -20,12 +19,6 @@ public class ExchangeLogger {
 
     private static final Logger log = LoggerFactory.getLogger(ExchangeLogger.class);
 
-    private final ReportingProperties.Logging config;
-
-    public ExchangeLogger(ReportingProperties properties) {
-        this.config = properties.logging();
-    }
-
     public void logComparison(CapturedExchange exchange, ComparisonResult result) {
         var candidate = result.candidateResponse();
         var report = new ComparisonReport.Compared(
@@ -35,10 +28,10 @@ public class ExchangeLogger {
                 exchange.response().statusCode().value(),
                 exchange.response().duration().toNanos(),
                 candidate.duration().toNanos(),
-                truncate(exchange.response().body().map(HttpBody::content).orElse(null)),
+                exchange.response().body().map(HttpBody::content).orElse(null),
                 candidate.statusCode().value(),
                 result.matched(),
-                truncate(candidate.body().map(HttpBody::content).orElse(null)),
+                candidate.body().map(HttpBody::content).orElse(null),
                 result.discrepancies().stream().map(ReportedDiscrepancy::from).toList());
 
         var summary = summarize(report.discrepancies());
@@ -70,15 +63,15 @@ public class ExchangeLogger {
                 .log(message);
     }
 
-    private List<Map<String, Object>> toLogShape(List<ReportedDiscrepancy> discrepancies) {
+    private static List<Map<String, Object>> toLogShape(List<ReportedDiscrepancy> discrepancies) {
         return discrepancies.stream().map(d -> {
             Map<String, Object> m = new LinkedHashMap<>();
             m.put("type", d.type());
             m.put("field_kind", d.fieldKind());
             d.name().ifPresent(n -> m.put("name", n));
             d.path().ifPresent(p -> m.put("path", p));
-            d.originalValue().map(this::truncate).ifPresent(v -> m.put("original_value", v));
-            d.candidateValue().map(this::truncate).ifPresent(v -> m.put("candidate_value", v));
+            d.originalValue().ifPresent(v -> m.put("original_value", v));
+            d.candidateValue().ifPresent(v -> m.put("candidate_value", v));
             return m;
         }).toList();
     }
@@ -90,7 +83,7 @@ public class ExchangeLogger {
                 exchange.request().path().value(),
                 exchange.response().statusCode().value(),
                 exchange.response().duration().toNanos(),
-                truncate(exchange.response().body().map(HttpBody::content).orElse(null)),
+                exchange.response().body().map(HttpBody::content).orElse(null),
                 error.getClass().getSimpleName() + ": " + error.getMessage());
 
         log.atError()
@@ -113,20 +106,5 @@ public class ExchangeLogger {
     private static String summarize(ReportedDiscrepancy d) {
         var qualifier = d.name().or(d::path).map(s -> ":" + s).orElse("");
         return d.type() + ":" + d.fieldKind() + qualifier;
-    }
-
-    private String truncate(String value) {
-        if (value == null) {
-            return null;
-        }
-        int max = config.maxValueLength();
-        if (value.length() <= max) {
-            return value;
-        }
-        int end = max;
-        if (Character.isHighSurrogate(value.charAt(end - 1))) {
-            end--;
-        }
-        return value.substring(0, end) + "...";
     }
 }

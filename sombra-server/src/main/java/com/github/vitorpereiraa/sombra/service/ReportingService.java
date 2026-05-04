@@ -34,8 +34,9 @@ public class ReportingService {
         metrics.recordProcessed(outcome, method, result.candidateResponse().statusCode());
 
         for (var discrepancy : result.discrepancies()) {
-            var reported = ReportedDiscrepancy.from(discrepancy);
-            metrics.recordDiscrepancy(reported.type(), reported.fieldKind());
+            metrics.recordDiscrepancy(
+                    ReportedDiscrepancy.typeOf(discrepancy),
+                    ReportedDiscrepancy.fieldKindOf(discrepancy.field()));
         }
 
         logger.logComparison(exchange, result);

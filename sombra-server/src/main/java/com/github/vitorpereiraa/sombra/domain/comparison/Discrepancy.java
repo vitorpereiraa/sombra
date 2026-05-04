@@ -6,7 +6,7 @@ public sealed interface Discrepancy {
 
     ResponseField field();
 
-    record ValueMismatch(ResponseField field, String originalValue, String candidateValue) implements Discrepancy {
+    record ValueMismatch(ResponseField field, DiscrepancyValue originalValue, DiscrepancyValue candidateValue) implements Discrepancy {
 
         public ValueMismatch {
             checkArgument(field != null, "ValueMismatch field cannot be null");
@@ -15,7 +15,7 @@ public sealed interface Discrepancy {
         }
     }
 
-    record FieldAdded(ResponseField field, String candidateValue) implements Discrepancy {
+    record FieldAdded(ResponseField field, DiscrepancyValue candidateValue) implements Discrepancy {
 
         public FieldAdded {
             checkArgument(field != null, "FieldAdded field cannot be null");
@@ -23,7 +23,7 @@ public sealed interface Discrepancy {
         }
     }
 
-    record FieldRemoved(ResponseField field, String originalValue) implements Discrepancy {
+    record FieldRemoved(ResponseField field, DiscrepancyValue originalValue) implements Discrepancy {
 
         public FieldRemoved {
             checkArgument(field != null, "FieldRemoved field cannot be null");
@@ -31,7 +31,7 @@ public sealed interface Discrepancy {
         }
     }
 
-    record TypeMismatch(ResponseField field, String originalValue, String candidateValue) implements Discrepancy {
+    record TypeMismatch(ResponseField field, DiscrepancyValue originalValue, DiscrepancyValue candidateValue) implements Discrepancy {
 
         public TypeMismatch {
             checkArgument(field != null, "TypeMismatch field cannot be null");

@@ -3,6 +3,7 @@ package com.github.vitorpereiraa.sombra.service;
 import com.github.vitorpereiraa.sombra.ComparisonProperties;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
+import com.github.vitorpereiraa.sombra.domain.comparison.DiscrepancyValue;
 import com.github.vitorpereiraa.sombra.domain.comparison.FieldPath;
 import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
 import com.github.vitorpereiraa.sombra.domain.http.HttpHeader;
@@ -50,8 +51,8 @@ public class ResponseComparisonService {
         if (original.statusCode().value() != candidate.statusCode().value()) {
             discrepancies.add(new Discrepancy.ValueMismatch(
                     new ResponseField.StatusCode(),
-                    String.valueOf(original.statusCode().value()),
-                    String.valueOf(candidate.statusCode().value())));
+                    new DiscrepancyValue.Status(original.statusCode().value()),
+                    new DiscrepancyValue.Status(candidate.statusCode().value())));
         }
 
         if (compareHeaders) {
@@ -81,15 +82,15 @@ public class ResponseComparisonService {
 
             if (origValues == null) {
                 discrepancies.add(new Discrepancy.FieldAdded(
-                        new ResponseField.Header(name), String.join(", ", candValues)));
+                        new ResponseField.Header(name), new DiscrepancyValue.Headers(candValues)));
             } else if (candValues == null) {
                 discrepancies.add(new Discrepancy.FieldRemoved(
-                        new ResponseField.Header(name), String.join(", ", origValues)));
+                        new ResponseField.Header(name), new DiscrepancyValue.Headers(origValues)));
             } else if (!origValues.equals(candValues)) {
                 discrepancies.add(new Discrepancy.ValueMismatch(
                         new ResponseField.Header(name),
-                        String.join(", ", origValues),
-                        String.join(", ", candValues)));
+                        new DiscrepancyValue.Headers(origValues),
+                        new DiscrepancyValue.Headers(candValues)));
             }
         }
         return discrepancies;
@@ -116,12 +117,12 @@ public class ResponseComparisonService {
 
         if (originalBody.isEmpty()) {
             return List.of(new Discrepancy.FieldAdded(
-                    new ResponseField.Body(), candidateBody.get().content()));
+                    new ResponseField.Body(), new DiscrepancyValue.RawBody(candidateBody.get().content())));
         }
 
         if (candidateBody.isEmpty()) {
             return List.of(new Discrepancy.FieldRemoved(
-                    new ResponseField.Body(), originalBody.get().content()));
+                    new ResponseField.Body(), new DiscrepancyValue.RawBody(originalBody.get().content())));
         }
 
         var originalContent = originalBody.get().content();
@@ -137,10 +138,19 @@ public class ResponseComparisonService {
             return originalContent.equals(candidateContent)
                     ? List.of()
                     : List.of(new Discrepancy.ValueMismatch(
-                            new ResponseField.Body(), originalContent, candidateContent));
+                            new ResponseField.Body(),
+                            new DiscrepancyValue.RawBody(originalContent),
+                            new DiscrepancyValue.RawBody(candidateContent)));
         }
         return List.of(new Discrepancy.TypeMismatch(
-                new ResponseField.Body(), originalContent, candidateContent));
+                new ResponseField.Body(),
+                bodyValue(originalJson, originalContent),
+                bodyValue(candidateJson, candidateContent)));
+    }
+
+    private static DiscrepancyValue bodyValue(Optional<JsonValue> json, String raw) {
+        return json.<DiscrepancyValue>map(DiscrepancyValue.JsonBody::new)
+                .orElseGet(() -> new DiscrepancyValue.RawBody(raw));
     }
 
     Optional<JsonValue> parseJson(String content) {
