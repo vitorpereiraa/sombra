@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ReportingService {
 
-    private final SombraMetrics metrics;
-    private final ExchangeLogger logger;
+    private final DiscrepancyMetrics metrics;
+    private final DiscrepancyLogger logger;
 
-    public ReportingService(SombraMetrics metrics, ExchangeLogger logger) {
+    public ReportingService(DiscrepancyMetrics metrics, DiscrepancyLogger logger) {
         this.metrics = metrics;
         this.logger = logger;
     }

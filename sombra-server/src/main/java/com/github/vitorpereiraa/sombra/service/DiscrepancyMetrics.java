@@ -7,11 +7,11 @@ import java.time.Duration;
 import org.springframework.stereotype.Component;
 
 @Component
-public class SombraMetrics {
+public class DiscrepancyMetrics {
 
     private final MeterRegistry registry;
 
-    public SombraMetrics(MeterRegistry registry) {
+    public DiscrepancyMetrics(MeterRegistry registry) {
         this.registry = registry;
     }
 

@@ -15,9 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ExchangeLogger {
+public class DiscrepancyLogger {
 
-    private static final Logger log = LoggerFactory.getLogger(ExchangeLogger.class);
+    private static final Logger log = LoggerFactory.getLogger(DiscrepancyLogger.class);
 
     public void logComparison(CapturedExchange exchange, ComparisonResult result) {
         var candidate = result.candidateResponse();
@@ -100,7 +100,7 @@ public class ExchangeLogger {
     }
 
     private static String summarize(List<ReportedDiscrepancy> discrepancies) {
-        return discrepancies.stream().map(ExchangeLogger::summarize).collect(Collectors.joining(","));
+        return discrepancies.stream().map(DiscrepancyLogger::summarize).collect(Collectors.joining(","));
     }
 
     private static String summarize(ReportedDiscrepancy d) {

@@ -7,7 +7,12 @@ import java.util.List;
 
 public sealed interface DiscrepancyValue {
 
-    record Status(int code) implements DiscrepancyValue {}
+    record Status(int code) implements DiscrepancyValue {
+
+        public Status {
+            checkArgument(code >= 0, "Status code cannot be negative, got: %s", code);
+        }
+    }
 
     record Headers(List<String> values) implements DiscrepancyValue {
 
