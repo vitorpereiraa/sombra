@@ -227,8 +227,44 @@
       ]
     },
     {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "fillOpacity": 20,
+            "lineWidth": 2,
+            "spanNulls": false,
+            "stacking": { "mode": "none" }
+          },
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Match Rate" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 14 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single" }
+      },
+      "title": "Match Rate Over Time",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "sum(rate(sombra_exchange_processed_total{outcome=\"match\"}[5m])) / sum(rate(sombra_exchange_processed_total[5m]))",
+          "legendFormat": "Match Rate"
+        }
+      ]
+    },
+    {
       "collapsed": false,
-      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 14 },
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
       "title": "Discrepancies",
       "type": "row"
     },
@@ -244,7 +280,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 15 },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
       "options": {
         "legend": { "displayMode": "list", "placement": "bottom" },
         "orientation": "horizontal",
@@ -255,7 +291,8 @@
       "targets": [
         {
           "expr": "sum by (type) (sombra_discrepancy_count_total)",
-          "legendFormat": "{{type}}"
+          "legendFormat": "{{type}}",
+          "instant": true
         }
       ]
     },
@@ -267,7 +304,7 @@
         },
         "overrides": []
       },
-      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 15 },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
       "options": {
         "legend": { "displayMode": "list", "placement": "right" },
         "pieType": "donut",
@@ -280,6 +317,68 @@
         {
           "expr": "sum by (field_kind) (sombra_discrepancy_count_total)",
           "legendFormat": "{{field_kind}}"
+        }
+      ]
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "title": "Pipeline",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 1
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "orientation": "horizontal",
+        "xTickLabelRotation": 0
+      },
+      "title": "Replay Errors by Type",
+      "type": "barchart",
+      "targets": [
+        {
+          "expr": "sum by (error_type) (sombra_replay_errors_total)",
+          "legendFormat": "{{error_type}}",
+          "instant": true
+        }
+      ]
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "fillOpacity": 10,
+            "lineWidth": 2,
+            "spanNulls": false,
+            "stacking": { "mode": "none" }
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+      "options": {
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "multi" }
+      },
+      "title": "Kafka Consumer Lag",
+      "type": "timeseries",
+      "targets": [
+        {
+          "expr": "max by (topic) (kafka_consumer_fetch_manager_records_lag_max{job=\"sombra-server\"})",
+          "legendFormat": "{{topic}}"
         }
       ]
     }

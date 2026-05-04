@@ -8,10 +8,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class ReportingService {
 
-    private final SombraMetrics metrics;
-    private final ExchangeLogger logger;
+    private final DiscrepancyMetrics metrics;
+    private final DiscrepancyLogger logger;
 
-    public ReportingService(SombraMetrics metrics, ExchangeLogger logger) {
+    public ReportingService(DiscrepancyMetrics metrics, DiscrepancyLogger logger) {
         this.metrics = metrics;
         this.logger = logger;
     }
@@ -34,8 +34,9 @@ public class ReportingService {
         metrics.recordProcessed(outcome, method, result.candidateResponse().statusCode());
 
         for (var discrepancy : result.discrepancies()) {
-            var reported = ReportedDiscrepancy.from(discrepancy);
-            metrics.recordDiscrepancy(reported.type(), reported.fieldKind());
+            metrics.recordDiscrepancy(
+                    ReportedDiscrepancy.typeOf(discrepancy),
+                    ReportedDiscrepancy.fieldKindOf(discrepancy.field()));
         }
 
         logger.logComparison(exchange, result);
@@ -46,7 +47,7 @@ public class ReportingService {
                 exchange.request().method(),
                 exchange.response().duration(),
                 exchange.response().statusCode());
-        metrics.recordReplayError();
+        metrics.recordReplayError(error.getClass().getSimpleName());
 
         logger.logReplayError(exchange, error);
     }

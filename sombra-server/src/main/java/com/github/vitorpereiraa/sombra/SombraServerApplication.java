@@ -1,12 +1,11 @@
 package com.github.vitorpereiraa.sombra;
 
-import com.github.vitorpereiraa.sombra.config.ReportingProperties;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 
 @SpringBootApplication
-@EnableConfigurationProperties({SombraServerProperties.class, ComparisonProperties.class, ReportingProperties.class})
+@EnableConfigurationProperties({SombraServerProperties.class, ComparisonProperties.class})
 public class SombraServerApplication {
 
 	static void main(String[] args) {

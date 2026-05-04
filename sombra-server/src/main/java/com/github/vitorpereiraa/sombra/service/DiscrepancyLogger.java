@@ -1,6 +1,5 @@
 package com.github.vitorpereiraa.sombra.service;
 
-import com.github.vitorpereiraa.sombra.config.ReportingProperties;
 import com.github.vitorpereiraa.sombra.domain.capture.CapturedExchange;
 import com.github.vitorpereiraa.sombra.domain.capture.TraceId;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
@@ -16,15 +15,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ExchangeLogger {
+public class DiscrepancyLogger {
 
-    private static final Logger log = LoggerFactory.getLogger(ExchangeLogger.class);
-
-    private final ReportingProperties.Logging config;
-
-    public ExchangeLogger(ReportingProperties properties) {
-        this.config = properties.logging();
-    }
+    private static final Logger log = LoggerFactory.getLogger(DiscrepancyLogger.class);
 
     public void logComparison(CapturedExchange exchange, ComparisonResult result) {
         var candidate = result.candidateResponse();
@@ -35,10 +28,10 @@ public class ExchangeLogger {
                 exchange.response().statusCode().value(),
                 exchange.response().duration().toNanos(),
                 candidate.duration().toNanos(),
-                truncate(exchange.response().body().map(HttpBody::content).orElse(null)),
+                exchange.response().body().map(HttpBody::content).orElse(null),
                 candidate.statusCode().value(),
                 result.matched(),
-                truncate(candidate.body().map(HttpBody::content).orElse(null)),
+                candidate.body().map(HttpBody::content).orElse(null),
                 result.discrepancies().stream().map(ReportedDiscrepancy::from).toList());
 
         var summary = summarize(report.discrepancies());
@@ -70,6 +63,19 @@ public class ExchangeLogger {
                 .log(message);
     }
 
+    private static List<Map<String, Object>> toLogShape(List<ReportedDiscrepancy> discrepancies) {
+        return discrepancies.stream().map(d -> {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("type", d.type());
+            m.put("field_kind", d.fieldKind());
+            d.name().ifPresent(n -> m.put("name", n));
+            d.path().ifPresent(p -> m.put("path", p));
+            d.originalValue().ifPresent(v -> m.put("original_value", v));
+            d.candidateValue().ifPresent(v -> m.put("candidate_value", v));
+            return m;
+        }).toList();
+    }
+
     public void logReplayError(CapturedExchange exchange, Throwable error) {
         var report = new ComparisonReport.ReplayFailed(
                 exchange.traceId().map(TraceId::value).orElse(null),
@@ -77,7 +83,7 @@ public class ExchangeLogger {
                 exchange.request().path().value(),
                 exchange.response().statusCode().value(),
                 exchange.response().duration().toNanos(),
-                truncate(exchange.response().body().map(HttpBody::content).orElse(null)),
+                exchange.response().body().map(HttpBody::content).orElse(null),
                 error.getClass().getSimpleName() + ": " + error.getMessage());
 
         log.atError()
@@ -88,42 +94,17 @@ public class ExchangeLogger {
                 .addKeyValue("original_response_status", report.originalStatus())
                 .addKeyValue("original_response_duration_ns", report.originalDurationNs())
                 .addKeyValue("original_response_body", report.originalBody())
+                .addKeyValue("error_type", error.getClass().getSimpleName())
                 .addKeyValue("error", report.error())
                 .log("replay failed {} {}: {}", report.method(), report.path(), report.error());
     }
 
-    private static List<Map<String, Object>> toLogShape(List<ReportedDiscrepancy> discrepancies) {
-        return discrepancies.stream().map(d -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("type", d.type());
-            m.put("field_kind", d.fieldKind());
-            d.name().ifPresent(n -> m.put("name", n));
-            d.path().ifPresent(p -> m.put("path", p));
-            return m;
-        }).toList();
-    }
-
     private static String summarize(List<ReportedDiscrepancy> discrepancies) {
-        return discrepancies.stream().map(ExchangeLogger::summarize).collect(Collectors.joining(","));
+        return discrepancies.stream().map(DiscrepancyLogger::summarize).collect(Collectors.joining(","));
     }
 
     private static String summarize(ReportedDiscrepancy d) {
         var qualifier = d.name().or(d::path).map(s -> ":" + s).orElse("");
         return d.type() + ":" + d.fieldKind() + qualifier;
-    }
-
-    private String truncate(String value) {
-        if (value == null) {
-            return null;
-        }
-        int max = config.maxValueLength();
-        if (value.length() <= max) {
-            return value;
-        }
-        int end = max;
-        if (Character.isHighSurrogate(value.charAt(end - 1))) {
-            end--;
-        }
-        return value.substring(0, end) + "...";
     }
 }
