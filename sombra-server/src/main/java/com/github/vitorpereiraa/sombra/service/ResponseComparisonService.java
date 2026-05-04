@@ -5,7 +5,6 @@ import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
 import com.github.vitorpereiraa.sombra.domain.comparison.DiscrepancyValue;
 import com.github.vitorpereiraa.sombra.domain.comparison.FieldPath;
-import com.github.vitorpereiraa.sombra.domain.comparison.ResponseField;
 import com.github.vitorpereiraa.sombra.domain.http.HttpHeader;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
 import com.github.vitorpereiraa.sombra.domain.json.JsonComparator;
@@ -49,10 +48,8 @@ public class ResponseComparisonService {
         var discrepancies = new ArrayList<Discrepancy>();
 
         if (original.statusCode().value() != candidate.statusCode().value()) {
-            discrepancies.add(new Discrepancy.ValueMismatch(
-                    new ResponseField.StatusCode(),
-                    new DiscrepancyValue.Status(original.statusCode().value()),
-                    new DiscrepancyValue.Status(candidate.statusCode().value())));
+            discrepancies.add(Discrepancy.statusMismatch(
+                    original.statusCode().value(), candidate.statusCode().value()));
         }
 
         if (compareHeaders) {
@@ -81,16 +78,11 @@ public class ResponseComparisonService {
             var candValues = candHeaders.get(name);
 
             if (origValues == null) {
-                discrepancies.add(new Discrepancy.FieldAdded(
-                        new ResponseField.Header(name), new DiscrepancyValue.Headers(candValues)));
+                discrepancies.add(Discrepancy.headerAdded(name, candValues));
             } else if (candValues == null) {
-                discrepancies.add(new Discrepancy.FieldRemoved(
-                        new ResponseField.Header(name), new DiscrepancyValue.Headers(origValues)));
+                discrepancies.add(Discrepancy.headerRemoved(name, origValues));
             } else if (!origValues.equals(candValues)) {
-                discrepancies.add(new Discrepancy.ValueMismatch(
-                        new ResponseField.Header(name),
-                        new DiscrepancyValue.Headers(origValues),
-                        new DiscrepancyValue.Headers(candValues)));
+                discrepancies.add(Discrepancy.headerMismatch(name, origValues, candValues));
             }
         }
         return discrepancies;
@@ -116,13 +108,11 @@ public class ResponseComparisonService {
         }
 
         if (originalBody.isEmpty()) {
-            return List.of(new Discrepancy.FieldAdded(
-                    new ResponseField.Body(), new DiscrepancyValue.RawBody(candidateBody.get().content())));
+            return List.of(Discrepancy.bodyAdded(candidateBody.get().content()));
         }
 
         if (candidateBody.isEmpty()) {
-            return List.of(new Discrepancy.FieldRemoved(
-                    new ResponseField.Body(), new DiscrepancyValue.RawBody(originalBody.get().content())));
+            return List.of(Discrepancy.bodyRemoved(originalBody.get().content()));
         }
 
         var originalContent = originalBody.get().content();
@@ -137,13 +127,9 @@ public class ResponseComparisonService {
         if (originalJson.isEmpty() && candidateJson.isEmpty()) {
             return originalContent.equals(candidateContent)
                     ? List.of()
-                    : List.of(new Discrepancy.ValueMismatch(
-                            new ResponseField.Body(),
-                            new DiscrepancyValue.RawBody(originalContent),
-                            new DiscrepancyValue.RawBody(candidateContent)));
+                    : List.of(Discrepancy.bodyValueMismatch(originalContent, candidateContent));
         }
-        return List.of(new Discrepancy.TypeMismatch(
-                new ResponseField.Body(),
+        return List.of(Discrepancy.bodyTypeMismatch(
                 bodyValue(originalJson, originalContent),
                 bodyValue(candidateJson, candidateContent)));
     }
