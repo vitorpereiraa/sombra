@@ -6,14 +6,6 @@ Sombra captures HTTP traffic from a running service, replays it against a candid
 
 ## How It Works
 
-```
-  traffic                  Kafka                       HTTP replay
-    |                       topic                          |
-    v                        |                             v
- System A  ───────────>  [ captured-exchanges ]  ───>  Sombra Server  ───>  System B
- (+ sombra-agent)                                      compare responses
-```
-
 1. **Capture** — A servlet filter (`sombra-agent`) intercepts every HTTP request/response on the original service and publishes them to a Kafka topic.
 2. **Replay** — `sombra-server` consumes captured exchanges and replays each request against the candidate service.
 3. **Compare** — Responses are compared: status codes, headers (optional), and JSON bodies with field-level granularity.
@@ -139,10 +131,3 @@ sombra:
       compare-headers: true                          # optional
       ignored-headers: ["X-Request-Id"]              # optional
 ```
-
-## Tech Stack
-
-- Spring Boot 4.0.4
-- Java 26
-- Apache Kafka (KRaft mode)
-- Micrometer + OTLP (metrics)
