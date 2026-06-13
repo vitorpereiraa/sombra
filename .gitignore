@@ -3,6 +3,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### jqwik (failing-sample database, regenerated per run) ###
+.jqwik-database
+
 ### STS ###
 .apt_generated
 .classpath
