@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra.streaming;
+package com.github.vitorpereiraa.sombra.ingestion;
 
 import com.github.vitorpereiraa.sombra.agent.streaming.dto.CapturedExchangeEvent;
 import com.github.vitorpereiraa.sombra.domain.capture.CapturedExchange;

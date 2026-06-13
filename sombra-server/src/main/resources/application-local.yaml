@@ -1,7 +1,9 @@
 sombra:
   server:
-    topic-name: sombra.captured-exchanges
-    candidate-url: http://localhost:8083
+    ingestion:
+      topic-name: sombra.captured-exchanges
+    replay:
+      candidate-url: http://localhost:8083
 
 spring:
   docker:

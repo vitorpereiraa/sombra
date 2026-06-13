@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra.service;
+package com.github.vitorpereiraa.sombra.replay;
 
 import com.github.vitorpereiraa.sombra.domain.http.HttpRequest;
 import com.github.vitorpereiraa.sombra.domain.http.HttpResponse;
@@ -8,11 +8,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 @Component
-public class CandidateReplayService {
+public class ReplayService {
 
     private final RestClient restClient;
 
-    public CandidateReplayService(RestClient restClient) {
+    public ReplayService(RestClient restClient) {
         this.restClient = restClient;
     }
 

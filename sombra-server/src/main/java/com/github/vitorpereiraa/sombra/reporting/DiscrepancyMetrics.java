@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra.service;
+package com.github.vitorpereiraa.sombra.reporting;
 
 import com.github.vitorpereiraa.sombra.domain.http.HttpMethod;
 import com.github.vitorpereiraa.sombra.domain.http.StatusCode;

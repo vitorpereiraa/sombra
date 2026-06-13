@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra;
+package com.github.vitorpereiraa.sombra.comparison;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 

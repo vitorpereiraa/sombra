@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra.service;
+package com.github.vitorpereiraa.sombra.comparison;
 
 import com.github.vitorpereiraa.sombra.domain.json.JsonArray;
 import com.github.vitorpereiraa.sombra.domain.json.JsonBoolean;
