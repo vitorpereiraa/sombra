@@ -1,4 +1,4 @@
-package com.github.vitorpereiraa.sombra.service;
+package com.github.vitorpereiraa.sombra.replay;
 
 import com.github.vitorpereiraa.sombra.domain.http.HttpBody;
 import com.github.vitorpereiraa.sombra.domain.http.HttpHeader;

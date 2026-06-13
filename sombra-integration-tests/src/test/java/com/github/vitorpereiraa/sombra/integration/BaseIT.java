@@ -4,8 +4,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 
 import com.github.vitorpereiraa.sombra.SombraServerApplication;
+import com.github.vitorpereiraa.sombra.comparison.ComparisonService;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
-import com.github.vitorpereiraa.sombra.service.ResponseComparisonService;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,7 +26,7 @@ public abstract class BaseIT {
     private int port;
 
     @MockitoSpyBean
-    private ResponseComparisonService comparisonService;
+    private ComparisonService comparisonService;
 
     private final AtomicReference<ComparisonResult> lastResult = new AtomicReference<>();
 
@@ -58,8 +58,8 @@ public abstract class BaseIT {
         registry.add("management.server.port", () -> String.valueOf(findFreePort()));
         registry.add("sombra.agent.enabled", () -> true);
         registry.add("sombra.agent.topic-name", () -> "sombra.captured-exchanges");
-        registry.add("sombra.server.topic-name", () -> "sombra.captured-exchanges");
-        registry.add("sombra.server.candidate-url", () -> "http://localhost:" + port);
+        registry.add("sombra.server.ingestion.topic-name", () -> "sombra.captured-exchanges");
+        registry.add("sombra.server.replay.candidate-url", () -> "http://localhost:" + port);
         registry.add(
                 "spring.kafka.producer.key-serializer", () -> "org.apache.kafka.common.serialization.StringSerializer");
         registry.add(

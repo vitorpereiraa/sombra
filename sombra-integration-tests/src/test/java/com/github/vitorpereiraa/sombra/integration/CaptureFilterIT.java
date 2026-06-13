@@ -1,7 +1,7 @@
 package com.github.vitorpereiraa.sombra.integration;
 
 import com.github.vitorpereiraa.sombra.agent.streaming.dto.CapturedExchangeEvent;
-import com.github.vitorpereiraa.sombra.streaming.CapturedExchangeConsumer;
+import com.github.vitorpereiraa.sombra.ingestion.CapturedExchangeConsumer;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.http.MediaType;

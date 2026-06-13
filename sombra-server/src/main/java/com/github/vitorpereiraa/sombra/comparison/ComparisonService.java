@@ -1,6 +1,5 @@
-package com.github.vitorpereiraa.sombra.service;
+package com.github.vitorpereiraa.sombra.comparison;
 
-import com.github.vitorpereiraa.sombra.ComparisonProperties;
 import com.github.vitorpereiraa.sombra.domain.comparison.ComparisonResult;
 import com.github.vitorpereiraa.sombra.domain.comparison.Discrepancy;
 import com.github.vitorpereiraa.sombra.domain.comparison.DiscrepancyValue;
@@ -23,16 +22,16 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.json.JsonMapper;
 
 @Component
-public class ResponseComparisonService {
+public class ComparisonService {
 
-    private static final Logger log = LoggerFactory.getLogger(ResponseComparisonService.class);
+    private static final Logger log = LoggerFactory.getLogger(ComparisonService.class);
 
     private final JsonMapper jsonMapper;
     private final JsonComparator jsonComparator;
     private final boolean compareHeaders;
     private final Set<String> ignoredHeaders;
 
-    public ResponseComparisonService(ComparisonProperties properties, JsonMapper jsonMapper) {
+    public ComparisonService(ComparisonProperties properties, JsonMapper jsonMapper) {
         this.jsonMapper = jsonMapper;
         this.compareHeaders = properties.compareHeaders().orElse(false);
         this.ignoredHeaders = properties.ignoredHeaders().orElse(List.of()).stream()
