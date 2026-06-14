@@ -2,14 +2,14 @@
 
 Shadow testing tool for ensuring functional consistency during software architecture revamps.
 
-Sombra captures HTTP traffic from a running service, replays it against a candidate version, compares responses field-by-field, and reports discrepancies — all without modifying application code.
+Sombra captures HTTP traffic from a running service, replays it against a candidate version, compares responses field-by-field, and reports discrepancies — all without changing application business logic.
 
 ## How It Works
 
 1. **Capture** — A servlet filter (`sombra-agent`) intercepts every HTTP request/response on the original service and publishes them to a Kafka topic.
 2. **Replay** — `sombra-server` consumes captured exchanges and replays each request against the candidate service.
 3. **Compare** — Responses are compared: status codes, headers (optional), and JSON bodies with field-level granularity.
-4. **Report** — Discrepancies are logged as structured JSON and exported as metrics via OTLP.
+4. **Report** — Comparison results are logged as structured JSON, and processing metrics are exposed for Prometheus through Spring Boot Actuator.
 
 ## Modules
 
@@ -25,7 +25,7 @@ Sombra captures HTTP traffic from a running service, replays it against a candid
 ### Prerequisites
 
 - Java 26+
-- Docker (for Kafka)
+- Docker
 
 ### Build
 
@@ -35,10 +35,24 @@ Sombra captures HTTP traffic from a running service, replays it against a candid
 
 ### Run
 
+Two ways to run, depending on whether you're developing `sombra-server`.
+
+Full demo, everything in Docker:
+
 ```bash
-# Start sombra-server (auto-starts Kafka via Docker Compose)
-java -jar sombra-server/target/sombra-server-0.0.1-SNAPSHOT-exec.jar --spring.profiles.active=local
+docker compose up --build
 ```
+
+IDE/local dev: run `sombra-server` yourself; the `local` profile auto-starts
+`compose-local.yaml` (Kafka, demos, observability), which is `compose.yaml` minus
+`sombra-server`, so there's no port collision.
+
+```bash
+./mvnw -pl sombra-server spring-boot:run -Dspring-boot.run.profiles=local
+```
+
+The two modes are mutually exclusive: don't run both at once, since the host ports can
+only bind once.
 
 ### Integration Tests
 
@@ -55,26 +69,21 @@ The `sombra-demo` module contains two Spring Boot services that simulate a real 
 
 ### Running the Demo
 
-Build all modules:
+Start the full local stack:
 
 ```bash
-./mvnw clean package -DskipTests
+docker compose up
 ```
 
-Start the three services in separate terminals:
+Docker Compose starts the Kafka broker, `sombra-server`, `demo-original`, `demo-candidate`, Prometheus, Grafana, Loki, and Alloy.
+
+After code changes, rebuild the images before starting the stack:
 
 ```bash
-# Terminal 1 — candidate service
-java -jar sombra-demo/demo-candidate/target/demo-candidate-0.0.1-SNAPSHOT.jar
-
-# Terminal 2 — sombra-server (auto-starts Kafka)
-java -jar sombra-server/target/sombra-server-0.0.1-SNAPSHOT-exec.jar --spring.profiles.active=local
-
-# Terminal 3 — original service (with sombra-agent)
-java -jar sombra-demo/demo-original/target/demo-original-0.0.1-SNAPSHOT.jar
+docker compose up --build
 ```
 
-Send requests to the original service:
+In another terminal, send requests to the original service:
 
 ```bash
 curl http://localhost:8082/api/users/1    # Match — identical responses
@@ -82,7 +91,34 @@ curl http://localhost:8082/api/users/2    # Mismatch — name, email changed + n
 curl http://localhost:8082/api/users/999  # Mismatch — 404 vs 200 status code
 ```
 
-Watch the sombra-server terminal for structured comparison logs showing `"match":true/false` with field-level discrepancy details.
+Watch the `sombra-server` logs for structured comparison events showing `"match":true/false` with field-level discrepancy details.
+
+Useful local endpoints:
+
+| Service | URL |
+|---------|-----|
+| Sombra server | `http://localhost:8080` |
+| Sombra metrics | `http://localhost:8081/actuator/prometheus` |
+| Grafana | `http://localhost:3000` |
+| Prometheus | `http://localhost:9090` |
+| Loki | `http://localhost:3100` |
+
+Stop the demo stack when finished:
+
+```bash
+docker compose down
+```
+
+### Manual Development Run
+
+For local development on individual services, the applications can still be run as JVM processes. Build the jars first, then start the candidate service, `sombra-server` with the `local` profile, and the original service:
+
+```bash
+./mvnw clean package -DskipTests
+java -jar sombra-demo/demo-candidate/target/demo-candidate-0.0.1-SNAPSHOT.jar
+java -jar sombra-server/target/sombra-server-0.0.1-SNAPSHOT-exec.jar --spring.profiles.active=local
+java -jar sombra-demo/demo-original/target/demo-original-0.0.1-SNAPSHOT.jar
+```
 
 ### Load Testing with k6
 
@@ -123,8 +159,10 @@ sombra:
 ```yaml
 sombra:
   server:
-    topic-name: sombra.captured-exchanges
-    candidate-url: http://localhost:8083
+    ingestion:
+      topic-name: sombra.captured-exchanges
+    replay:
+      candidate-url: http://localhost:8083
     comparison:
       ignored-fields: ["/timestamp", "/requestId"]  # optional
       ignore-array-order: true                       # optional

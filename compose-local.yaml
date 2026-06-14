@@ -67,27 +67,6 @@ services:
     depends_on:
       - loki
 
-  sombra-server:
-    build:
-      context: .
-      dockerfile: sombra-server/Dockerfile
-    container_name: sombra-server
-    ports:
-      - "8080:8080"
-      - "8081:8081"
-    environment:
-      KAFKA_BOOTSTRAP_SERVERS: broker:9092
-      SOMBRA_TOPIC_NAME: sombra.captured-exchanges
-      SOMBRA_CANDIDATE_URL: http://demo-candidate:8083
-      LOGGING_STRUCTURED_FORMAT_CONSOLE: ecs
-    labels:
-      logging: sombra
-    depends_on:
-      broker:
-        condition: service_started
-      loki:
-        condition: service_started
-
   demo-original:
     build:
       context: .

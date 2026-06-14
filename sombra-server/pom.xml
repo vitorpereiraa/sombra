@@ -114,6 +114,7 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<classifier>exec</classifier>
+					<workingDirectory>${maven.multiModuleProjectDirectory}</workingDirectory>
 				</configuration>
 			</plugin>
 			<plugin>
