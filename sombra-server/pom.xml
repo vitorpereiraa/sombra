@@ -9,6 +9,30 @@
 	</parent>
 	<artifactId>sombra-server</artifactId>
 
+	<properties>
+		<!--
+		  jqwik 1.10.1 is built on JUnit Platform 1.14.4; this project's parent
+		  (Spring Boot 4) manages JUnit to Platform/Jupiter 6.0.x. We pin JUnit to
+		  the 5.14.4 train for this module's test scope only so jqwik's engine runs
+		  on a compatible platform. The sombra-integration-tests module is unaffected
+		  and keeps JUnit 6.
+		-->
+		<jqwik.version>1.10.1</jqwik.version>
+		<junit.version>5.14.4</junit.version>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.junit</groupId>
+				<artifactId>junit-bom</artifactId>
+				<version>${junit.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
 	<dependencies>
 		<dependency>
 			<groupId>com.github.vitorpereiraa</groupId>
@@ -46,6 +70,29 @@
 			<optional>true</optional>
 		</dependency>
 
+		<!-- Property-based and unit testing of the pure core (see jqwik pinning note above) -->
+		<dependency>
+			<groupId>net.jqwik</groupId>
+			<artifactId>jqwik</artifactId>
+			<version>${jqwik.version}</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-launcher</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.assertj</groupId>
+			<artifactId>assertj-core</artifactId>
+			<scope>test</scope>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -67,6 +114,18 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
 					<classifier>exec</classifier>
+				</configuration>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<!-- jqwik property classes are named *Properties; keep the standard patterns too. -->
+					<includes>
+						<include>**/*Test.java</include>
+						<include>**/*Tests.java</include>
+						<include>**/*Properties.java</include>
+					</includes>
 				</configuration>
 			</plugin>
 		</plugins>
