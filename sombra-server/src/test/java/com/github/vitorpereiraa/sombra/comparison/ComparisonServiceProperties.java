@@ -9,6 +9,9 @@ import com.github.vitorpereiraa.sombra.domain.http.StatusCode;
 import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+
+import com.github.vitorpereiraa.sombra.domain.json.JsonArbitraries;
+import com.github.vitorpereiraa.sombra.domain.json.JsonValue;
 import net.jqwik.api.Arbitraries;
 import net.jqwik.api.Arbitrary;
 import net.jqwik.api.Assume;
@@ -35,6 +38,18 @@ class ComparisonServiceProperties {
     @Property
     void identicalResponsesAlwaysMatch(@ForAll @IntRange(min = 100, max = 599) int status, @ForAll String body) {
         var sameBody = HttpBody.of(body);
+        var result = service().compare(response(status, sameBody), response(status, sameBody));
+        assertThat(result.matched()).isTrue();
+    }
+
+    @Provide
+    Arbitrary<JsonValue> json() {
+        return JsonArbitraries.jsonValues();
+    }
+
+    @Property
+    void identicalJsonResponsesAlwaysMatch(@ForAll @IntRange(min = 100, max = 599) int status, @ForAll("json") JsonValue value) {
+        var sameBody = HttpBody.of(JsonMapper.builder().build().writeValueAsString(value));
         var result = service().compare(response(status, sameBody), response(status, sameBody));
         assertThat(result.matched()).isTrue();
     }
