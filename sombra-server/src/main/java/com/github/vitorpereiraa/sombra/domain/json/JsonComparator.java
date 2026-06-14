@@ -17,53 +17,53 @@ public class JsonComparator {
         this.ignoreArrayOrder = ignoreArrayOrder;
     }
 
+    private record Both(JsonValue original, JsonValue candidate) {}
+
     public List<Discrepancy> compare(JsonValue original, JsonValue candidate, FieldPath path) {
+        return compare(new Both(original, candidate), path);
+    }
+
+    private List<Discrepancy> compare(Both both, FieldPath path) {
         if (path.isIgnoredBy(ignoredFields)) {
             return List.of();
         }
 
-        return switch (original) {
-            case JsonObject orig when candidate instanceof JsonObject cand -> compareObjects(orig, cand, path);
-            case JsonArray orig when candidate instanceof JsonArray cand -> compareArrays(orig, cand, path);
-            case JsonPrimitive orig when candidate instanceof JsonPrimitive cand -> comparePrimitives(orig, cand, path);
-            default -> List.of(Discrepancy.bodyTypeMismatch(path, original, candidate));
+        return switch (both) {
+            case Both(JsonObject o, JsonObject c)   -> compareObjects(o, c, path);
+            case Both(JsonArray o, JsonArray c)     -> compareArrays(o, c, path);
+            case Both(JsonString o, JsonString c)   -> diff(!o.value().equals(c.value()), path, o, c);
+            case Both(JsonNumber o, JsonNumber c)   -> diff(o.value().compareTo(c.value()) != 0, path, o, c);
+            case Both(JsonBoolean o, JsonBoolean c) -> diff(o.value() != c.value(), path, o, c);
+            case Both(JsonNull _, JsonNull _)       -> List.of();
+            default -> List.of(Discrepancy.bodyTypeMismatch(path, both.original(), both.candidate()));
         };
     }
 
-    static List<Discrepancy> comparePrimitives(JsonPrimitive original, JsonPrimitive candidate, FieldPath path) {
-        return switch (original) {
-            case JsonString orig when candidate instanceof JsonString cand ->
-                orig.value().equals(cand.value()) ? List.of() : List.of(Discrepancy.bodyValueMismatch(path, orig, cand));
-            case JsonNumber orig when candidate instanceof JsonNumber cand ->
-                orig.value().compareTo(cand.value()) == 0 ? List.of() : List.of(Discrepancy.bodyValueMismatch(path, orig, cand));
-            case JsonBoolean orig when candidate instanceof JsonBoolean cand ->
-                orig.value() == cand.value() ? List.of() : List.of(Discrepancy.bodyValueMismatch(path, orig, cand));
-            case JsonNull _ when candidate instanceof JsonNull _ -> List.of();
-            default -> List.of(Discrepancy.bodyTypeMismatch(path, original, candidate));
-        };
+    private static List<Discrepancy> diff(boolean differ, FieldPath path, JsonValue o, JsonValue c) {
+        return differ ? List.of(Discrepancy.bodyValueMismatch(path, o, c)) : List.of();
+    }
+
+    private List<Discrepancy> compareChild(JsonValue orig, JsonValue cand, FieldPath childPath) {
+        if (childPath.isIgnoredBy(ignoredFields)) {
+            return List.of();
+        }
+        if (orig == null) {
+            return List.of(Discrepancy.bodyAdded(childPath, cand));
+        }
+        if (cand == null) {
+            return List.of(Discrepancy.bodyRemoved(childPath, orig));
+        }
+        return compare(new Both(orig, cand), childPath);
     }
 
     List<Discrepancy> compareObjects(JsonObject original, JsonObject candidate, FieldPath path) {
-        var discrepancies = new ArrayList<Discrepancy>();
         var allKeys = new LinkedHashSet<>(original.fields().keySet());
         allKeys.addAll(candidate.fields().keySet());
 
+        var discrepancies = new ArrayList<Discrepancy>();
         for (var key : allKeys) {
-            var fieldPath = path.append(key);
-            if (fieldPath.isIgnoredBy(ignoredFields)) {
-                continue;
-            }
-
-            var origValue = original.fields().get(key);
-            var candValue = candidate.fields().get(key);
-
-            if (origValue == null) {
-                discrepancies.add(Discrepancy.bodyAdded(fieldPath, candValue));
-            } else if (candValue == null) {
-                discrepancies.add(Discrepancy.bodyRemoved(fieldPath, origValue));
-            } else {
-                discrepancies.addAll(compare(origValue, candValue, fieldPath));
-            }
+            discrepancies.addAll(
+                    compareChild(original.fields().get(key), candidate.fields().get(key), path.append(key)));
         }
         return discrepancies;
     }
@@ -79,18 +79,9 @@ public class JsonComparator {
         int maxSize = Math.max(origElements.size(), candElements.size());
 
         for (int i = 0; i < maxSize; i++) {
-            var elementPath = path.append(String.valueOf(i));
-            if (elementPath.isIgnoredBy(ignoredFields)) {
-                continue;
-            }
-
-            if (i >= origElements.size()) {
-                discrepancies.add(Discrepancy.bodyAdded(elementPath, candElements.get(i)));
-            } else if (i >= candElements.size()) {
-                discrepancies.add(Discrepancy.bodyRemoved(elementPath, origElements.get(i)));
-            } else {
-                discrepancies.addAll(compare(origElements.get(i), candElements.get(i), elementPath));
-            }
+            var orig = i < origElements.size() ? origElements.get(i) : null;
+            var cand = i < candElements.size() ? candElements.get(i) : null;
+            discrepancies.addAll(compareChild(orig, cand, path.append(String.valueOf(i))));
         }
         return discrepancies;
     }
