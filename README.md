@@ -109,17 +109,6 @@ Stop the demo stack when finished:
 docker compose down
 ```
 
-### Manual Development Run
-
-For local development on individual services, the applications can still be run as JVM processes. Build the jars first, then start the candidate service, `sombra-server` with the `local` profile, and the original service:
-
-```bash
-./mvnw clean package -DskipTests
-java -jar sombra-demo/demo-candidate/target/demo-candidate-0.0.1-SNAPSHOT.jar
-java -jar sombra-server/target/sombra-server-0.0.1-SNAPSHOT-exec.jar --spring.profiles.active=local
-java -jar sombra-demo/demo-original/target/demo-original-0.0.1-SNAPSHOT.jar
-```
-
 ### Load Testing with k6
 
 With the demo stack running, use the k6 script to generate sustained load:
