@@ -1,5 +1,6 @@
 package com.github.vitorpereiraa.sombra.demo.original;
 
+import com.github.vitorpereiraa.sombra.demo.common.UserGenerator;
 import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,22 +16,21 @@ class UserController {
 
     private static final Logger log = LoggerFactory.getLogger(UserController.class);
 
-    private static final Map<Integer, Map<String, Object>> USERS = Map.of(
-            1, Map.of("id", 1, "name", "Alice", "email", "alice@acme.com", "role", "admin"),
-            2, Map.of("id", 2, "name", "Bob", "email", "bob@acme.com", "role", "user"));
-
+    /**
+     * The "current" system: always returns the deterministic baseline for an id. It ignores any
+     * {@code divergence} query parameter the load test forwards; only the candidate honors it.
+     */
     @GetMapping("/{id}")
     ResponseEntity<Map<String, Object>> getUser(@PathVariable int id) {
-        var user = USERS.get(id);
-        var status = user == null ? 404 : 200;
+        var status = id <= 0 ? 404 : 200;
         log.atInfo()
                 .addKeyValue("request_method", "GET")
                 .addKeyValue("request_path", "/api/users/" + id)
                 .addKeyValue("response_status", status)
                 .log("GET /api/users/{} -> {}", id, status);
-        if (user == null) {
+        if (id <= 0) {
             return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(user);
+        return ResponseEntity.ok(UserGenerator.generate(id));
     }
 }

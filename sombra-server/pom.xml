@@ -129,6 +129,30 @@
 					</includes>
 				</configuration>
 			</plugin>
+			<!--
+			  Coverage for the comparison core. The property/unit tests run in the test phase, so the
+			  report (target/site/jacoco/index.html) is produced by `mvn test` or `mvn verify`.
+			-->
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.15</version>
+				<executions>
+					<execution>
+						<id>prepare-agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
 		</plugins>
 	</build>
 

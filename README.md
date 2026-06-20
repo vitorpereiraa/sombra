@@ -117,17 +117,26 @@ With the demo stack running, use the k6 script to generate sustained load:
 k6 run k6/load-test.js
 ```
 
-The script cycles through all three user IDs (1, 2, 999) at a constant request rate. Override defaults via environment variables or by editing the top of the script:
+Each iteration requests a random user id and forwards a `divergence` rate, so you can dial how many candidate responses diverge from the original. Both demo apps generate user data deterministically from the id, so a given id always yields the same baseline on both sides; the only discrepancies are the ones the candidate is told to inject.
 
 ```bash
-# Custom target URL and run duration
+# Default: no injected discrepancies
+k6 run k6/load-test.js
+
+# Inject discrepancies in ~40% of responses
+k6 run -e DISCREPANCY_RATE=0.4 k6/load-test.js
+
+# Custom target URL
 k6 run -e BASE_URL=http://localhost:8082 k6/load-test.js
 ```
+
+The candidate rotates injected discrepancies through every type Sombra reports: value mismatch, field added, field removed, type mismatch, and status mismatch (404 vs 200).
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `BASE_URL` | `http://localhost:8082` | Target service URL (env var) |
-| `USER_IDS` | `[1, 2, 999]` | User IDs to cycle through (edit script) |
+| `DISCREPANCY_RATE` | `0` | Fraction (0..1) of candidate responses that diverge (env var) |
+| `MAX_USER_ID` | `10000` | Upper bound for the random user id per request (env var) |
 | `rate` | `5` | Requests per second (edit script) |
 | `duration` | `30s` | Test duration (edit script) |
 | `preAllocatedVUs` | `10` | Virtual user pool size (edit script) |

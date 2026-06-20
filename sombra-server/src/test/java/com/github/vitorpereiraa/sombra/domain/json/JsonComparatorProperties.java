@@ -8,6 +8,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import net.jqwik.api.Arbitraries;
@@ -93,6 +94,36 @@ class JsonComparatorProperties {
         var original = new JsonArray(elements);
         var candidate = new JsonArray(shuffled);
         assertThat(comparator(true).compare(original, candidate, ROOT)).isEmpty();
+    }
+
+    // Ignoring a nested path suppresses only the discrepancy at that exact path: without the ignore
+    // the nested value mismatch is reported, with it the comparison is clean.
+    @Property
+    void nestedIgnoreSuppressesOnlyThatPath(@ForAll("segments") String parent, @ForAll("segments") String child) {
+        var original = new JsonObject(Map.of(parent, new JsonObject(Map.of(child, new JsonNumber(BigDecimal.ONE)))));
+        var candidate = new JsonObject(Map.of(parent, new JsonObject(Map.of(child, new JsonNumber(BigDecimal.TEN)))));
+        var nested = new FieldPath("/" + parent).append(child);
+
+        assertThat(comparator(false).compare(original, candidate, ROOT))
+                .singleElement()
+                .isInstanceOf(Discrepancy.ValueMismatch.class);
+        assertThat(new JsonComparator(Set.of(nested), false).compare(original, candidate, ROOT))
+                .isEmpty();
+    }
+
+    // A field present with a null value is not the same as an absent field: one side dropping the key
+    // is a FieldRemoved (and FieldAdded in the mirror direction), never a clean match.
+    @Property
+    void nullValueDiffersFromMissingField(@ForAll("segments") String key) {
+        var withNull = new JsonObject(Map.of(key, new JsonNull()));
+        var without = new JsonObject(Map.of());
+
+        assertThat(comparator(false).compare(withNull, without, ROOT))
+                .singleElement()
+                .isInstanceOf(Discrepancy.FieldRemoved.class);
+        assertThat(comparator(false).compare(without, withNull, ROOT))
+                .singleElement()
+                .isInstanceOf(Discrepancy.FieldAdded.class);
     }
 
     // Differing JSON kinds at a path produce exactly one TypeMismatch.

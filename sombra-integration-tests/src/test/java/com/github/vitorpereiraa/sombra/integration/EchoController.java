@@ -34,6 +34,25 @@ class EchoController {
         return ResponseEntity.ok(body);
     }
 
+    // Always returns a 5xx (both on capture and replay) so the exchange matches but is tagged with a
+    // non-2xx status class.
+    @PostMapping("/echo/server-error")
+    ResponseEntity<String> echoServerError(@RequestBody String body) {
+        return ResponseEntity.status(500).body(body);
+    }
+
+    // On replay only, returns a body whose nested /user/name field differs, so the lone discrepancy
+    // is at a nested path (used to exercise nested field ignoring).
+    @PostMapping("/echo/nested")
+    ResponseEntity<String> echoNested(
+            @RequestBody String body,
+            @RequestHeader(value = "X-Sombra-Replay", required = false) String replayHeader) {
+        if (replayHeader != null) {
+            return ResponseEntity.ok("{\"user\":{\"id\":1,\"name\":\"changed\"}}");
+        }
+        return ResponseEntity.ok(body);
+    }
+
     @GetMapping("/echo/replay/count")
     ResponseEntity<Integer> replayCount() {
         return ResponseEntity.ok(replayCallCount.get());

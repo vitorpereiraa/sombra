@@ -1,6 +1,5 @@
 import http from "k6/http";
 import { check } from "k6";
-import exec from "k6/execution";
 
 // ---------------------------------------------------------------------------
 // CONFIGURATION — tweak everything here
@@ -8,11 +7,13 @@ import exec from "k6/execution";
 
 const BASE_URL = __ENV.BASE_URL || "http://localhost:8082";
 
-const USER_IDS = [
-  1,   // match    — same data on both versions
-  2,   // mismatch — different name, email, extra field
-  999, // mismatch — 404 on original, 200 on candidate
-];
+// Fraction (0..1) of candidate responses that should diverge from the original.
+// Forwarded as a query param to demo-original, which ignores it, but Sombra replays
+// it to demo-candidate, which honors it. 0 => no discrepancies, 1 => every response diverges.
+const DISCREPANCY_RATE = Number(__ENV.DISCREPANCY_RATE || 0);
+
+// Requests draw a random id from [1, MAX_USER_ID] each iteration so the traffic varies.
+const MAX_USER_ID = Number(__ENV.MAX_USER_ID || 10000);
 
 export const options = {
   scenarios: {
@@ -34,8 +35,10 @@ export const options = {
 // ---------------------------------------------------------------------------
 
 export default function () {
-  const id = USER_IDS[exec.scenario.iterationInTest % USER_IDS.length];
-  const res = http.get(`${BASE_URL}/api/users/${id}`);
+  const id = 1 + Math.floor(Math.random() * MAX_USER_ID);
+  const res = http.get(
+    `${BASE_URL}/api/users/${id}?divergence=${DISCREPANCY_RATE}`,
+  );
 
   check(res, {
     "status is 200 or 404": (r) => r.status === 200 || r.status === 404,

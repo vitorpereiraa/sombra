@@ -6,14 +6,8 @@
 		<groupId>com.github.vitorpereiraa</groupId>
 		<artifactId>sombra</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
+		<relativePath>../../pom.xml</relativePath>
 	</parent>
-	<artifactId>sombra-demo</artifactId>
-	<packaging>pom</packaging>
-
-	<modules>
-		<module>demo-common</module>
-		<module>demo-original</module>
-		<module>demo-candidate</module>
-	</modules>
+	<artifactId>demo-common</artifactId>
 
 </project>

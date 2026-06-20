@@ -103,6 +103,15 @@ class ComparisonServiceProperties {
         assertThat(service.compare(lower, upper).matched()).isTrue();
     }
 
+    // With header comparison disabled (the default), header differences never affect the verdict.
+    @Property
+    void headerDifferencesAreIgnoredWhenComparisonDisabled(
+            @ForAll("headerNames") String name, @ForAll("headerValues") List<String> values) {
+        var withHeader = response(200, Optional.empty(), List.of(new HttpHeader(name, values)));
+        var withoutHeader = response(200, Optional.empty(), List.of());
+        assertThat(service().compare(withHeader, withoutHeader).matched()).isTrue();
+    }
+
     @Provide
     Arbitrary<JsonValue> json() {
         return JsonArbitraries.jsonValues();

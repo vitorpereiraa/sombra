@@ -6,10 +6,12 @@ COPY sombra-agent/pom.xml sombra-agent/
 COPY sombra-server/pom.xml sombra-server/
 COPY sombra-integration-tests/pom.xml sombra-integration-tests/
 COPY sombra-demo/pom.xml sombra-demo/
+COPY sombra-demo/demo-common/pom.xml sombra-demo/demo-common/
 COPY sombra-demo/demo-original/pom.xml sombra-demo/demo-original/
 COPY sombra-demo/demo-candidate/pom.xml sombra-demo/demo-candidate/
 RUN ./mvnw -pl sombra-demo/demo-original -am dependency:go-offline -DskipTests -B
 COPY sombra-agent/src sombra-agent/src
+COPY sombra-demo/demo-common/src sombra-demo/demo-common/src
 COPY sombra-demo/demo-original/src sombra-demo/demo-original/src
 RUN ./mvnw -pl sombra-demo/demo-original -am package -DskipTests -B
 

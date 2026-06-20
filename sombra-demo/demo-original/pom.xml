@@ -15,6 +15,10 @@
 			<groupId>com.github.vitorpereiraa</groupId>
 			<artifactId>sombra-agent</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>com.github.vitorpereiraa</groupId>
+			<artifactId>demo-common</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
